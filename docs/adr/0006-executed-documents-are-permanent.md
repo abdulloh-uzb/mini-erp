@@ -1,0 +1,3 @@
+# Executed documents are permanent; corrections are opposite documents
+
+No executed document can be edited, deleted or cancelled. A wrong sale is fixed with a sales return, a wrong purchase with a supplier return, a wrong transfer with a reverse transfer, and a wrong inventory count with a new count. MoySklad lets you un-post documents; we don't, because a cancelled debt sale whose debt was partly paid leaves customer balances ambiguous, and an append-only history is easier for the owner to trust. Document dates are always the execution moment (no backdating), so a late purchase never silently changes the average cost, and therefore the profit, of sales already made.

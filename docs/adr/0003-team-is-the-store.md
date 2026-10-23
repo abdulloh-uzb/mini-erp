@@ -1,0 +1,3 @@
+# The starter kit's Team is the store (tenant)
+
+Multi-tenancy is code-level only: one database, every business table scoped by `team_id`. We reuse the starter kit's Team as the store instead of adding a separate Store model, and run spatie/laravel-permission in teams mode so roles (owner, employee) are per store. Super-admin is global and manages stores without seeing their business data. Each user belongs to exactly one store with one role, so the kit's personal teams, team switching and invitations are removed; an owner self-registers together with their store and creates employees directly.
