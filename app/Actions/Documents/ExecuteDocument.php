@@ -2,6 +2,9 @@
 
 namespace App\Actions\Documents;
 
+use App\Actions\Cash\CashRegister;
+use App\Actions\Cash\LoanLedger;
+use App\Enums\CashOperationType;
 use App\Enums\DocumentKind;
 use App\Enums\DocumentStatus;
 use App\Models\Document;
@@ -21,7 +24,11 @@ use LogicException;
  */
 class ExecuteDocument
 {
-    public function __construct(private StockLedger $stock) {}
+    public function __construct(
+        private StockLedger $stock,
+        private CashRegister $register,
+        private LoanLedger $loans,
+    ) {}
 
     /**
      * Execute the draft document as the given user.
@@ -36,7 +43,7 @@ class ExecuteDocument
             $this->stock->lockProducts($locked->team_id, $lines->pluck('product_id')->all());
 
             match ($locked->kind) {
-                DocumentKind::OpeningBalance => $this->executeOpeningBalance($lines->all()),
+                DocumentKind::OpeningBalance => $this->executeOpeningBalance($locked, $user, $lines->all()),
                 default => throw new LogicException("Documents of kind [{$locked->kind->value}] cannot be executed yet."),
             };
 
@@ -90,16 +97,28 @@ class ExecuteDocument
     }
 
     /**
-     * Put the opening stock in place, each line at its own location and at its cost per piece.
+     * Put the opening stock in place, each line at its own location and at its cost per piece,
+     * put the opening cash in the register per method and open the loans already running.
+     * Opening loans move no money: the opening cash already reflects them.
      *
      * @param  array<int, DocumentLine>  $lines
      */
-    private function executeOpeningBalance(array $lines): void
+    private function executeOpeningBalance(Document $document, User $user, array $lines): void
     {
         $this->validateLines($lines, fn (DocumentLine $line) => $line->price === null ? ['price' => __('Tannarxni kiriting.')] : []);
 
         foreach ($lines as $line) {
             $this->stock->receive($line, (int) $line->location_id, $line->quantity, $line->price);
+        }
+
+        foreach ($document->payments()->get() as $payment) {
+            if (bccomp($payment->amount, '0', 2) > 0) {
+                $this->register->record($user, CashOperationType::OpeningBalance, $payment->payment_method, $payment->amount, documentId: $document->id);
+            }
+        }
+
+        foreach ($document->openingLoans()->get() as $openingLoan) {
+            $this->loans->openExisting($user, $openingLoan);
         }
     }
 

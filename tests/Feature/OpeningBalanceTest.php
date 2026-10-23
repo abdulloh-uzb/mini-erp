@@ -1,9 +1,12 @@
 <?php
 
+use App\Actions\Cash\CashRegister;
 use App\Enums\DocumentKind;
 use App\Enums\DocumentStatus;
+use App\Models\Counterparty;
 use App\Models\Document;
 use App\Models\DocumentLine;
+use App\Models\Loan;
 use App\Models\Location;
 use App\Models\Product;
 use App\Models\StockBalance;
@@ -11,11 +14,11 @@ use App\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
 
 /**
- * @return array{note: string|null, lines: array<int, array<string, mixed>>}
+ * @return array{note: string|null, lines: array<int, array<string, mixed>>, payments: array<string, string|null>, loans: array<int, array<string, mixed>>}
  */
-function openingBalanceInput(array $lines, ?string $note = null): array
+function openingBalanceInput(array $lines, ?string $note = null, array $payments = [], array $loans = []): array
 {
-    return ['note' => $note, 'lines' => $lines];
+    return ['note' => $note, 'lines' => $lines, 'payments' => $payments, 'loans' => $loans];
 }
 
 describe('show', function () {
@@ -101,6 +104,58 @@ describe('save', function () {
             'lines.0.pieces' => 'Miqdorni kiriting.',
         ]);
         expect(Document::query()->count())->toBe(0);
+    });
+});
+
+describe('kassa and loans', function () {
+    test('the owner saves opening cash per method and open loans with the draft', function () {
+        $owner = User::factory()->create();
+        $lender = Counterparty::factory()->for($owner->team)->create(['name' => 'Akam']);
+
+        $this->actingAs($owner)->put(route('opening-balance.update'), openingBalanceInput(
+            [],
+            payments: ['cash' => '1250000', 'card' => null, 'bank_transfer' => '40000.50'],
+            loans: [['direction' => 'received', 'counterparty_id' => $lender->id, 'principal' => '3000000', 'due_date' => '2027-03-01', 'note' => null]],
+        ))->assertSessionHasNoErrors();
+
+        $this->actingAs($owner)->get(route('opening-balance.show'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('document.payments', ['cash' => '1250000.00', 'bank_transfer' => '40000.50'])
+                ->has('document.loans', 1)
+                ->where('document.loans.0.direction', 'received')
+                ->where('document.loans.0.counterparty_id', $lender->id)
+                ->where('document.loans.0.counterparty_name', 'Akam')
+                ->where('document.loans.0.principal', '3000000.00')
+                ->where('document.loans.0.due_date', '2027-03-01')
+                ->where('counterparties.0.name', 'Akam'),
+            );
+    });
+
+    test('an opening loan needs a counterparty of the store, a direction and a principal above zero; cash cannot be negative', function () {
+        $owner = User::factory()->create();
+        $foreign = Counterparty::factory()->create();
+
+        $this->actingAs($owner)->put(route('opening-balance.update'), openingBalanceInput(
+            [],
+            payments: ['cash' => '-1'],
+            loans: [['direction' => 'lent', 'counterparty_id' => $foreign->id, 'principal' => '0']],
+        ))->assertSessionHasErrors(['payments.cash', 'loans.0.direction', 'loans.0.counterparty_id', 'loans.0.principal']);
+
+        expect(Document::query()->count())->toBe(0);
+    });
+
+    test('executing puts the opening cash in the register and opens the loans', function () {
+        $owner = User::factory()->create();
+        $borrower = Counterparty::factory()->for($owner->team)->create();
+
+        $this->actingAs($owner)->post(route('opening-balance.execute'), openingBalanceInput(
+            [],
+            payments: ['cash' => '500000', 'card' => '20000'],
+            loans: [['direction' => 'given', 'counterparty_id' => $borrower->id, 'principal' => '100000', 'due_date' => null]],
+        ))->assertSessionHasNoErrors();
+
+        expect(app(CashRegister::class)->balances($owner->team))->toBe(['cash' => '500000.00', 'card' => '20000.00', 'bank_transfer' => '0.00'])
+            ->and(Loan::query()->sole()->balance())->toBe('100000.00');
     });
 });
 

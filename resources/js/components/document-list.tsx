@@ -34,15 +34,19 @@ export type DocumentListRow = {
 
 type FilterKey = Exclude<keyof DocumentListFilterValues, 'search'>;
 
-function useFilterUrl() {
+/** Builds the current page's URL with the given filters changed and the page reset. */
+export function useFilterUrl<Key extends string = FilterKey>() {
     const { url } = usePage();
 
-    return (changes: Partial<Record<FilterKey, string | number | null>>) => {
+    return (changes: Partial<Record<Key, string | number | null>>) => {
         const target = new URL(url, window.location.origin);
         target.searchParams.delete('page');
 
-        for (const [key, value] of Object.entries(changes)) {
-            if (value === null || value === '') {
+        for (const [key, value] of Object.entries(changes) as [
+            string,
+            string | number | null | undefined,
+        ][]) {
+            if (value === null || value === undefined || value === '') {
                 target.searchParams.delete(key);
             } else {
                 target.searchParams.set(key, String(value));
@@ -140,7 +144,7 @@ export function DocumentListFilters({
     );
 }
 
-function FilterField({
+export function FilterField({
     label,
     children,
 }: {
@@ -155,7 +159,7 @@ function FilterField({
     );
 }
 
-function FilterSelect({
+export function FilterSelect({
     label,
     allLabel,
     value,
@@ -164,8 +168,8 @@ function FilterSelect({
 }: {
     label: string;
     allLabel: string;
-    value: number | null;
-    options: PickerOption[];
+    value: number | string | null;
+    options: { id: number | string; name: string }[];
     onChange: (value: string | null) => void;
 }) {
     return (

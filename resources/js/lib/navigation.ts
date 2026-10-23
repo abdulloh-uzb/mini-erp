@@ -2,16 +2,20 @@ import {
     Boxes,
     ClipboardList,
     Contact,
+    HandCoins,
     LayoutGrid,
     Package,
     Store,
     Users,
+    Wallet,
     Warehouse,
 } from 'lucide-react';
 import { dashboard } from '@/routes';
 import { index as adminStores } from '@/routes/admin/stores';
+import { index as cash } from '@/routes/cash';
 import { index as counterparties } from '@/routes/counterparties';
 import { index as employees } from '@/routes/employees';
+import { index as loans } from '@/routes/loans';
 import { index as locations } from '@/routes/locations';
 import { show as openingBalance } from '@/routes/opening-balance';
 import { index as products } from '@/routes/products';
@@ -53,7 +57,23 @@ const storeNavigation: NavGroup[] = [
             },
         ],
     },
-    { title: 'Pul', items: [] },
+    {
+        title: 'Pul',
+        items: [
+            {
+                title: 'Kassa',
+                href: cash(),
+                icon: Wallet,
+                permission: 'cash-operations.view',
+            },
+            {
+                title: 'Qarzlar',
+                href: loans(),
+                icon: HandCoins,
+                permission: 'loans.manage',
+            },
+        ],
+    },
     {
         title: 'Kontragentlar',
         items: [

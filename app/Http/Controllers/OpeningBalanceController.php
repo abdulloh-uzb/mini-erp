@@ -5,8 +5,11 @@ namespace App\Http\Controllers;
 use App\Actions\Documents\ExecuteDocument;
 use App\Actions\Documents\SaveDraft;
 use App\Enums\DocumentKind;
+use App\Enums\LoanDirection;
+use App\Enums\PaymentMethod;
 use App\Http\Requests\SaveOpeningBalanceRequest;
 use App\Http\Resources\DocumentResource;
+use App\Models\Counterparty;
 use App\Models\Document;
 use App\Models\Location;
 use App\Models\Product;
@@ -19,7 +22,8 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * The store's one opening balance (owner only): saved as often as needed, executed once.
+ * The store's one opening balance (owner only), with its Tovarlar, Kassa and Qarzlar
+ * sections: saved as often as needed, executed once.
  * Until it is executed, or the owner says there is none, no document can be executed (D13).
  */
 class OpeningBalanceController extends Controller
@@ -29,7 +33,7 @@ class OpeningBalanceController extends Controller
      */
     public function show(Request $request): Response
     {
-        $document = $this->openingBalance()?->load(['lines.product', 'lines.location.parent', 'author', 'executor']);
+        $document = $this->openingBalance()?->load(['lines.product', 'lines.location.parent', 'payments', 'openingLoans.counterparty', 'author', 'executor']);
 
         return Inertia::render('opening-balance/show', [
             'document' => $document ? DocumentResource::make($document)->resolve($request) : null,
@@ -39,6 +43,9 @@ class OpeningBalanceController extends Controller
                 ->active()
                 ->orderBy('name')
                 ->get(['id', 'name', 'barcode', 'pieces_per_block']),
+            'counterparties' => Counterparty::query()->orderBy('name')->get(['id', 'name']),
+            'methods' => PaymentMethod::options(),
+            'directions' => LoanDirection::options(),
         ]);
     }
 
@@ -129,13 +136,21 @@ class OpeningBalanceController extends Controller
             Gate::authorize('update', $document);
         }
 
-        return $saveDraft->handle(
-            $document,
-            DocumentKind::OpeningBalance,
-            $request->user(),
-            ['note' => $request->validated('note')],
-            $request->documentLines(),
-        );
+        return DB::transaction(function () use ($request, $saveDraft, $document) {
+            $document = $saveDraft->handle(
+                $document,
+                DocumentKind::OpeningBalance,
+                $request->user(),
+                ['note' => $request->validated('note')],
+                $request->documentLines(),
+                $request->payments(),
+            );
+
+            $document->openingLoans()->delete();
+            $document->openingLoans()->createMany($request->openingLoans());
+
+            return $document;
+        });
     }
 
     /**

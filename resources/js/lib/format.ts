@@ -52,3 +52,14 @@ export function formatDateTime(value: string | null): string {
         minute: '2-digit',
     });
 }
+
+/** A calendar date ("2026-12-31") as "31.12.2026". */
+export function formatDate(value: string | null): string {
+    if (value === null) {
+        return '—';
+    }
+
+    const [year, month, day] = value.split('-');
+
+    return `${day}.${month}.${year}`;
+}

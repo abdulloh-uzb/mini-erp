@@ -1,7 +1,10 @@
 import { Head, router, useForm } from '@inertiajs/react';
+import { Plus, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import OpeningBalanceController from '@/actions/App/Http/Controllers/OpeningBalanceController';
 import AlertError from '@/components/alert-error';
+import { selectClassName } from '@/components/cash-form';
+import CounterpartyQuickCreate from '@/components/counterparty-quick-create';
 import {
     DocumentAudit,
     DocumentFormActions,
@@ -15,20 +18,45 @@ import {
 import type { DraftLine, LineErrors } from '@/components/document-form';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
+import { ListTable } from '@/components/list-page';
 import { SkipOpeningBalance } from '@/components/opening-balance-card';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { formatMoney, splitQuantity } from '@/lib/format';
+import { formatDate, formatMoney, splitQuantity } from '@/lib/format';
+import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import { show } from '@/routes/opening-balance';
-import type { DocumentData, PickerOption, PickerProduct } from '@/types';
+import type {
+    DocumentData,
+    EnumOption,
+    PickerOption,
+    PickerProduct,
+} from '@/types';
 
 type Props = {
     document: DocumentData | null;
     skipped: boolean;
     locations: PickerOption[];
     products: PickerProduct[];
+    counterparties: PickerOption[];
+    methods: EnumOption[];
+    directions: EnumOption[];
 };
+
+type Section = 'stock' | 'cash' | 'loans';
+
+type DraftLoan = {
+    key: string;
+    direction: string;
+    counterparty_id: number | '';
+    principal: string;
+    due_date: string;
+    note: string;
+};
+
+/** Validation errors keyed by field path (`payments.cash`, `loans.0.principal`). */
+type FieldErrors = Record<string, string | undefined>;
 
 const EXECUTE_WARNING =
     "Boshlang'ich qoldiq bir marta bajariladi. Bajarilgan hujjatni o'zgartirib yoki o'chirib bo'lmaydi. Davom etasizmi?";
@@ -38,6 +66,9 @@ export default function OpeningBalanceShow({
     skipped,
     locations,
     products,
+    counterparties,
+    methods,
+    directions,
 }: Props) {
     return (
         <>
@@ -59,12 +90,19 @@ export default function OpeningBalanceShow({
                         qoldiq yo'q» tanlangan).
                     </p>
                 ) : document?.status === 'executed' ? (
-                    <ExecutedOpeningBalance document={document} />
+                    <ExecutedOpeningBalance
+                        document={document}
+                        methods={methods}
+                        directions={directions}
+                    />
                 ) : (
                     <OpeningBalanceForm
                         document={document}
                         locations={locations}
                         products={products}
+                        counterparties={counterparties}
+                        methods={methods}
+                        directions={directions}
                     />
                 )}
             </div>
@@ -72,25 +110,91 @@ export default function OpeningBalanceShow({
     );
 }
 
-function ExecutedOpeningBalance({ document }: { document: DocumentData }) {
+function ExecutedOpeningBalance({
+    document,
+    methods,
+    directions,
+}: {
+    document: DocumentData;
+    methods: EnumOption[];
+    directions: EnumOption[];
+}) {
+    const [section, setSection] = useState<Section>('stock');
     const total = document.lines.reduce(
         (sum, line) => sum + line.quantity * Number(line.price ?? 0),
         0,
+    );
+    const directionNames = new Map(
+        directions.map((direction) => [direction.id, direction.name]),
     );
 
     return (
         <div className="flex flex-col gap-4">
             <DocumentAudit document={document} />
-            <SectionTabs />
-            <ExecutedLinesTable
-                document={document}
-                priceLabel="Tannarx/dona"
-                showLocation
-            />
-            <p className="text-sm">
-                Tovarlar qiymati:{' '}
-                <span className="font-semibold">{formatMoney(total)}</span>
-            </p>
+            <SectionTabs value={section} onChange={setSection} />
+            {section === 'stock' && (
+                <>
+                    <ExecutedLinesTable
+                        document={document}
+                        priceLabel="Tannarx/dona"
+                        showLocation
+                    />
+                    <p className="text-sm">
+                        Tovarlar qiymati:{' '}
+                        <span className="font-semibold">
+                            {formatMoney(total)}
+                        </span>
+                    </p>
+                </>
+            )}
+            {section === 'cash' && (
+                <div className="grid max-w-md gap-2 text-sm">
+                    {methods.map((method) => (
+                        <div
+                            key={method.id}
+                            className="flex justify-between border-b py-2"
+                        >
+                            <span>{method.name}</span>
+                            <span className="font-medium tabular-nums">
+                                {formatMoney(
+                                    document.payments?.[method.id] ?? 0,
+                                )}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+            )}
+            {section === 'loans' && (
+                <ListTable
+                    columns={[
+                        'Turi',
+                        'Kontragent',
+                        'Asosiy summa',
+                        'Muddat',
+                        'Izoh',
+                    ]}
+                >
+                    {(document.loans ?? []).map((loan) => (
+                        <tr key={loan.id} className="border-t">
+                            <td className="px-4 py-3">
+                                {directionNames.get(loan.direction)}
+                            </td>
+                            <td className="px-4 py-3">
+                                {loan.counterparty_name}
+                            </td>
+                            <td className="px-4 py-3 tabular-nums">
+                                {formatMoney(loan.principal)}
+                            </td>
+                            <td className="px-4 py-3 tabular-nums">
+                                {formatDate(loan.due_date)}
+                            </td>
+                            <td className="px-4 py-3 text-muted-foreground">
+                                {loan.note}
+                            </td>
+                        </tr>
+                    ))}
+                </ListTable>
+            )}
             {document.note && (
                 <p className="text-sm text-muted-foreground">
                     Izoh: {document.note}
@@ -100,13 +204,40 @@ function ExecutedOpeningBalance({ document }: { document: DocumentData }) {
     );
 }
 
-/** The opening balance's sections; Kassa, debts and loans tabs come with tickets 04, 05, 08. */
-function SectionTabs() {
+/** The opening balance's sections; the debt tabs come with tickets 05 and 08. */
+function SectionTabs({
+    value,
+    onChange,
+    withErrors = [],
+}: {
+    value: Section;
+    onChange: (section: Section) => void;
+    withErrors?: Section[];
+}) {
+    const sections: { id: Section; label: string }[] = [
+        { id: 'stock', label: 'Tovarlar' },
+        { id: 'cash', label: 'Kassa' },
+        { id: 'loans', label: 'Qarzlar' },
+    ];
+
     return (
         <div className="inline-flex w-fit rounded-lg bg-muted p-1">
-            <span className="rounded-md bg-background px-3 py-1.5 text-sm font-medium shadow-xs">
-                Tovarlar
-            </span>
+            {sections.map((section) => (
+                <button
+                    key={section.id}
+                    type="button"
+                    onClick={() => onChange(section.id)}
+                    className={cn(
+                        'rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors',
+                        value === section.id &&
+                            'bg-background text-foreground shadow-xs',
+                        withErrors.includes(section.id) &&
+                            'text-red-600 dark:text-red-400',
+                    )}
+                >
+                    {section.label}
+                </button>
+            ))}
         </div>
     );
 }
@@ -115,11 +246,18 @@ function OpeningBalanceForm({
     document,
     locations,
     products,
+    counterparties,
+    methods,
+    directions,
 }: {
     document: DocumentData | null;
     locations: PickerOption[];
     products: PickerProduct[];
+    counterparties: PickerOption[];
+    methods: EnumOption[];
+    directions: EnumOption[];
 }) {
+    const [section, setSection] = useState<Section>('stock');
     const productsById = useMemo(
         () => new Map(products.map((product) => [product.id, product])),
         [products],
@@ -142,11 +280,48 @@ function OpeningBalanceForm({
                 price: line.price ?? '',
             };
         }),
+        payments: Object.fromEntries(
+            methods.map((method) => [
+                method.id,
+                document?.payments?.[method.id] ?? '',
+            ]),
+        ) as Record<string, string>,
+        loans: (document?.loans ?? []).map((loan): DraftLoan => ({
+            key: newLineKey(),
+            direction: loan.direction,
+            counterparty_id: loan.counterparty_id,
+            principal: loan.principal,
+            due_date: loan.due_date ?? '',
+            note: loan.note ?? '',
+        })),
     });
-    const errors = form.errors as LineErrors;
+    const errors = form.errors as LineErrors & FieldErrors;
+    const errorKeys = Object.keys(form.errors);
+    const sectionsWithErrors = (
+        [
+            ['stock', 'lines.'],
+            ['cash', 'payments.'],
+            ['loans', 'loans.'],
+        ] as [Section, string][]
+    )
+        .filter(([, prefix]) => errorKeys.some((key) => key.startsWith(prefix)))
+        .map(([id]) => id);
 
     form.transform((data) => ({
         note: data.note,
+        payments: Object.fromEntries(
+            Object.entries(data.payments).map(([method, amount]) => [
+                method,
+                amount === '' ? null : amount,
+            ]),
+        ),
+        loans: data.loans.map((loan) => ({
+            direction: loan.direction,
+            counterparty_id: loan.counterparty_id,
+            principal: loan.principal,
+            due_date: loan.due_date === '' ? null : loan.due_date,
+            note: loan.note === '' ? null : loan.note,
+        })),
         lines: data.lines.map((line) => ({
             location_id: line.location_id,
             product_id: line.product_id,
@@ -201,9 +376,42 @@ function OpeningBalanceForm({
             {document && <DocumentAudit document={document} />}
             {errors.document && <AlertError errors={[errors.document]} />}
 
-            <SectionTabs />
+            <SectionTabs
+                value={section}
+                onChange={setSection}
+                withErrors={sectionsWithErrors}
+            />
 
-            <div className="flex flex-wrap items-end gap-3">
+            {section === 'cash' && (
+                <CashSection
+                    methods={methods}
+                    payments={form.data.payments}
+                    errors={errors}
+                    onChange={(method, amount) =>
+                        form.setData('payments', {
+                            ...form.data.payments,
+                            [method]: amount,
+                        })
+                    }
+                />
+            )}
+
+            {section === 'loans' && (
+                <LoansSection
+                    loans={form.data.loans}
+                    counterparties={counterparties}
+                    directions={directions}
+                    errors={errors}
+                    onChange={(loans) => form.setData('loans', loans)}
+                />
+            )}
+
+            <div
+                className={cn(
+                    'flex flex-wrap items-end gap-3',
+                    section !== 'stock' && 'hidden',
+                )}
+            >
                 <div className="grid gap-2">
                     <Label htmlFor="opening-balance-location">
                         Yangi qatorlar joyi
@@ -226,7 +434,7 @@ function OpeningBalanceForm({
                 <ProductSearch products={products} onPick={addProduct} />
             </div>
 
-            {form.data.lines.length === 0 ? (
+            {section !== 'stock' ? null : form.data.lines.length === 0 ? (
                 <p className="rounded-xl border border-dashed p-10 text-center text-muted-foreground">
                     Mahsulotni qidiring yoki shtrix-kodini skanerlang.
                 </p>
@@ -294,6 +502,233 @@ function OpeningBalanceForm({
                     }
                 />
                 <SkipOpeningBalance />
+            </div>
+        </div>
+    );
+}
+
+/** Opening cash per payment method; empty means none. */
+function CashSection({
+    methods,
+    payments,
+    errors,
+    onChange,
+}: {
+    methods: EnumOption[];
+    payments: Record<string, string>;
+    errors: FieldErrors;
+    onChange: (method: string, amount: string) => void;
+}) {
+    const total = Object.values(payments).reduce(
+        (sum, amount) => sum + (Number(amount) || 0),
+        0,
+    );
+
+    return (
+        <div className="grid max-w-md gap-4">
+            {methods.map((method) => (
+                <div key={method.id} className="grid gap-2">
+                    <Label htmlFor={`opening-cash-${method.id}`}>
+                        {method.name}
+                    </Label>
+                    <Input
+                        id={`opening-cash-${method.id}`}
+                        inputMode="decimal"
+                        placeholder="0"
+                        value={payments[method.id] ?? ''}
+                        onChange={(event) =>
+                            onChange(method.id, event.target.value)
+                        }
+                    />
+                    <InputError message={errors[`payments.${method.id}`]} />
+                </div>
+            ))}
+            <p className="text-sm">
+                Jami:{' '}
+                <span className="font-semibold">{formatMoney(total)}</span>
+            </p>
+        </div>
+    );
+}
+
+/** Loans already running: given or received, counterparty, principal, optional due date. */
+function LoansSection({
+    loans,
+    counterparties,
+    directions,
+    errors,
+    onChange,
+}: {
+    loans: DraftLoan[];
+    counterparties: PickerOption[];
+    directions: EnumOption[];
+    errors: FieldErrors;
+    onChange: (loans: DraftLoan[]) => void;
+}) {
+    const update = (index: number, changes: Partial<DraftLoan>) =>
+        onChange(
+            loans.map((loan, position) =>
+                position === index ? { ...loan, ...changes } : loan,
+            ),
+        );
+    const add = (counterpartyId: number | '' = '') =>
+        onChange([
+            ...loans,
+            {
+                key: newLineKey(),
+                direction: directions[0]?.id ?? 'given',
+                counterparty_id: counterpartyId,
+                principal: '',
+                due_date: '',
+                note: '',
+            },
+        ]);
+
+    return (
+        <div className="flex flex-col gap-4">
+            {loans.length > 0 && (
+                <ListTable
+                    columns={[
+                        'Turi',
+                        'Kontragent',
+                        'Asosiy summa',
+                        'Muddat (ixtiyoriy)',
+                        'Izoh',
+                        '',
+                    ]}
+                >
+                    {loans.map((loan, index) => (
+                        <tr key={loan.key} className="border-t align-top">
+                            <td className="px-4 py-3">
+                                <select
+                                    aria-label="Turi"
+                                    value={loan.direction}
+                                    onChange={(event) =>
+                                        update(index, {
+                                            direction: event.target.value,
+                                        })
+                                    }
+                                    className={selectClassName}
+                                >
+                                    {directions.map((direction) => (
+                                        <option
+                                            key={direction.id}
+                                            value={direction.id}
+                                        >
+                                            {direction.name}
+                                        </option>
+                                    ))}
+                                </select>
+                                <InputError
+                                    message={errors[`loans.${index}.direction`]}
+                                />
+                            </td>
+                            <td className="px-4 py-3">
+                                <select
+                                    aria-label="Kontragent"
+                                    value={loan.counterparty_id}
+                                    onChange={(event) =>
+                                        update(index, {
+                                            counterparty_id:
+                                                Number(event.target.value) ||
+                                                '',
+                                        })
+                                    }
+                                    className={selectClassName}
+                                >
+                                    <option value="">Tanlang</option>
+                                    {counterparties.map((counterparty) => (
+                                        <option
+                                            key={counterparty.id}
+                                            value={counterparty.id}
+                                        >
+                                            {counterparty.name}
+                                        </option>
+                                    ))}
+                                </select>
+                                <InputError
+                                    message={
+                                        errors[`loans.${index}.counterparty_id`]
+                                    }
+                                />
+                            </td>
+                            <td className="px-4 py-3">
+                                <Input
+                                    aria-label="Asosiy summa"
+                                    inputMode="decimal"
+                                    value={loan.principal}
+                                    onChange={(event) =>
+                                        update(index, {
+                                            principal: event.target.value,
+                                        })
+                                    }
+                                />
+                                <InputError
+                                    message={errors[`loans.${index}.principal`]}
+                                />
+                            </td>
+                            <td className="px-4 py-3">
+                                <Input
+                                    aria-label="Muddat"
+                                    type="date"
+                                    value={loan.due_date}
+                                    onChange={(event) =>
+                                        update(index, {
+                                            due_date: event.target.value,
+                                        })
+                                    }
+                                />
+                                <InputError
+                                    message={errors[`loans.${index}.due_date`]}
+                                />
+                            </td>
+                            <td className="px-4 py-3">
+                                <Input
+                                    aria-label="Izoh"
+                                    value={loan.note}
+                                    onChange={(event) =>
+                                        update(index, {
+                                            note: event.target.value,
+                                        })
+                                    }
+                                />
+                            </td>
+                            <td className="px-4 py-3">
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    aria-label="Qatorni o'chirish"
+                                    onClick={() =>
+                                        onChange(
+                                            loans.filter(
+                                                (_, position) =>
+                                                    position !== index,
+                                            ),
+                                        )
+                                    }
+                                >
+                                    <Trash2 />
+                                </Button>
+                            </td>
+                        </tr>
+                    ))}
+                </ListTable>
+            )}
+            <div className="flex gap-2">
+                <Button type="button" variant="outline" onClick={() => add()}>
+                    <Plus />
+                    Qarz qo'shish
+                </Button>
+                <CounterpartyQuickCreate
+                    trigger={
+                        <Button type="button" variant="ghost">
+                            <Plus />
+                            Yangi kontragent
+                        </Button>
+                    }
+                    onCreated={(counterparty) => add(counterparty.id)}
+                />
             </div>
         </div>
     );

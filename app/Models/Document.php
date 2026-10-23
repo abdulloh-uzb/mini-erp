@@ -38,6 +38,8 @@ use Illuminate\Support\Facades\DB;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Collection<int, DocumentLine> $lines
+ * @property-read Collection<int, DocumentPayment> $payments
+ * @property-read Collection<int, OpeningLoan> $openingLoans
  * @property-read Location|null $location
  * @property-read Location|null $destinationLocation
  * @property-read Counterparty|null $counterparty
@@ -91,6 +93,26 @@ class Document extends Model
     public function lines(): HasMany
     {
         return $this->hasMany(DocumentLine::class)->orderBy('id');
+    }
+
+    /**
+     * Get the money the document moves per payment method (the opening balance's Kassa tab).
+     *
+     * @return HasMany<DocumentPayment, $this>
+     */
+    public function payments(): HasMany
+    {
+        return $this->hasMany(DocumentPayment::class)->orderBy('id');
+    }
+
+    /**
+     * Get the loans already running when the store started (the opening balance's Qarzlar tab).
+     *
+     * @return HasMany<OpeningLoan, $this>
+     */
+    public function openingLoans(): HasMany
+    {
+        return $this->hasMany(OpeningLoan::class)->orderBy('id');
     }
 
     /**

@@ -23,6 +23,20 @@ export type DocumentData = {
     created_at: string | null;
     executed_at: string | null;
     lines: DocumentLineData[];
+    /** Amount per payment method (the opening balance's Kassa tab), when loaded. */
+    payments?: Partial<Record<string, string>>;
+    /** The opening balance's open loans (Qarzlar tab), when loaded. */
+    loans?: OpeningLoanData[];
+};
+
+export type OpeningLoanData = {
+    id: number;
+    direction: 'given' | 'received';
+    counterparty_id: number;
+    counterparty_name: string;
+    principal: string;
+    due_date: string | null;
+    note: string | null;
 };
 
 export type PickerProduct = {

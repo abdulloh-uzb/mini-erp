@@ -27,6 +27,7 @@ enum StorePermission: string
 
     case CashOperationsView = 'cash-operations.view';
     case CashBalanceView = 'cash-balance.view';
+    case CashOperationReverse = 'cash-operation.reverse';
     case CustomerDebtsView = 'customer-debts.view';
     case CustomerDebtPaymentCreate = 'customer-debt-payment.create';
     case DebtWriteOff = 'debt.write-off';

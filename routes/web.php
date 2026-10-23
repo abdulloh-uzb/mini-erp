@@ -2,9 +2,11 @@
 
 use App\Enums\StorePermission;
 use App\Http\Controllers\Admin\StoreController;
+use App\Http\Controllers\CashOperationController;
 use App\Http\Controllers\CounterpartyController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\LoanController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\OpeningBalanceController;
 use App\Http\Controllers\ProductController;
@@ -51,6 +53,21 @@ Route::middleware(['auth', 'store'])->group(function () {
         ->middleware('can:'.StorePermission::CounterpartiesCreate->value)->name('counterparties.store');
     Route::put('counterparties/{counterparty}', [CounterpartyController::class, 'update'])
         ->middleware('can:'.StorePermission::CounterpartiesManage->value)->name('counterparties.update');
+
+    Route::get('cash', [CashOperationController::class, 'index'])
+        ->middleware('can:'.StorePermission::CashOperationsView->value)->name('cash.index');
+    Route::post('cash/operations', [CashOperationController::class, 'store'])
+        ->middleware('can:'.StorePermission::ExpenseCreate->value)->name('cash.operations.store');
+    Route::post('cash/operations/{operation}/reverse', [CashOperationController::class, 'reverse'])
+        ->middleware('can:'.StorePermission::CashOperationReverse->value)->name('cash.operations.reverse');
+
+    Route::middleware('can:'.StorePermission::LoansManage->value)->group(function () {
+        Route::get('loans', [LoanController::class, 'index'])->name('loans.index');
+        Route::post('loans', [LoanController::class, 'store'])->name('loans.store');
+        Route::get('loans/{loan}', [LoanController::class, 'show'])->name('loans.show');
+        Route::post('loans/{loan}/repayments', [LoanController::class, 'repay'])->name('loans.repayments.store');
+        Route::post('loans/{loan}/interest', [LoanController::class, 'interest'])->name('loans.interest.store');
+    });
 
     Route::middleware('can:'.StorePermission::OpeningBalanceManage->value)->group(function () {
         Route::get('opening-balance', [OpeningBalanceController::class, 'show'])->name('opening-balance.show');

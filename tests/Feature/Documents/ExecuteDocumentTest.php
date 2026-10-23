@@ -1,11 +1,20 @@
 <?php
 
+use App\Actions\Cash\CashRegister;
 use App\Actions\Documents\ExecuteDocument;
+use App\Enums\CashOperationType;
 use App\Enums\DocumentKind;
 use App\Enums\DocumentStatus;
+use App\Enums\LoanDirection;
+use App\Enums\PaymentMethod;
+use App\Models\CashOperation;
+use App\Models\Counterparty;
 use App\Models\Document;
 use App\Models\DocumentLine;
+use App\Models\DocumentPayment;
+use App\Models\Loan;
 use App\Models\Location;
+use App\Models\OpeningLoan;
 use App\Models\Product;
 use App\Models\ProductCost;
 use App\Models\StockBalance;
@@ -152,4 +161,44 @@ test('a second opening balance cannot be executed once one has been', function (
     expect(fn () => app(ExecuteDocument::class)->handle($second, $owner))
         ->toThrow(ValidationException::class, "Boshlang'ich qoldiq allaqachon bajarilgan.");
     expect(StockBalance::query()->count())->toBe(0);
+});
+
+test('executing the opening balance puts its cash per method in the register', function () {
+    $owner = User::factory()->create();
+    $document = Document::factory()->by($owner)->create();
+    DocumentPayment::factory()->for($document)->create(['payment_method' => PaymentMethod::Cash, 'amount' => '1500000']);
+    DocumentPayment::factory()->for($document)->create(['payment_method' => PaymentMethod::BankTransfer, 'amount' => '320000.50']);
+    $this->actingAs($owner);
+
+    app(ExecuteDocument::class)->handle($document, $owner);
+
+    expect(app(CashRegister::class)->balances($owner->team))->toBe(['cash' => '1500000.00', 'card' => '0.00', 'bank_transfer' => '320000.50'])
+        ->and(CashOperation::query()->pluck('type')->unique()->all())->toBe([CashOperationType::OpeningBalance])
+        ->and(CashOperation::query()->pluck('document_id')->unique()->all())->toBe([$document->id]);
+});
+
+test('executing the opening balance opens its loans without moving money', function () {
+    $owner = User::factory()->create();
+    $counterparty = Counterparty::factory()->for($owner->team)->create();
+    $document = Document::factory()->by($owner)->create();
+    OpeningLoan::factory()->for($document)->create([
+        'counterparty_id' => $counterparty->id,
+        'direction' => LoanDirection::Received,
+        'principal' => '2000000',
+        'due_date' => '2027-01-15',
+        'note' => 'Akamdan',
+    ]);
+    $this->actingAs($owner);
+
+    app(ExecuteDocument::class)->handle($document, $owner);
+
+    expect(Loan::query()->sole())
+        ->counterparty_id->toBe($counterparty->id)
+        ->direction->toBe(LoanDirection::Received)
+        ->principal->toBe('2000000.00')
+        ->due_date->toDateString()->toBe('2027-01-15')
+        ->note->toBe('Akamdan')
+        ->document_id->toBe($document->id)
+        ->balance()->toBe('2000000.00')
+        ->and(CashOperation::query()->count())->toBe(0);
 });
