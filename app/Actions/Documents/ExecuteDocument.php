@@ -3,12 +3,16 @@
 namespace App\Actions\Documents;
 
 use App\Actions\Cash\CashRegister;
+use App\Actions\Cash\DebtLedger;
 use App\Actions\Cash\LoanLedger;
 use App\Enums\CashOperationType;
+use App\Enums\DebtEntryType;
+use App\Enums\DebtSide;
 use App\Enums\DocumentKind;
 use App\Enums\DocumentStatus;
 use App\Models\Document;
 use App\Models\DocumentLine;
+use App\Models\DocumentPayment;
 use App\Models\Team;
 use App\Models\User;
 use Closure;
@@ -28,6 +32,7 @@ class ExecuteDocument
         private StockLedger $stock,
         private CashRegister $register,
         private LoanLedger $loans,
+        private DebtLedger $debts,
     ) {}
 
     /**
@@ -44,6 +49,7 @@ class ExecuteDocument
 
             match ($locked->kind) {
                 DocumentKind::OpeningBalance => $this->executeOpeningBalance($locked, $user, $lines->all()),
+                DocumentKind::Purchase => $this->executePurchase($locked, $user, $lines->all()),
                 default => throw new LogicException("Documents of kind [{$locked->kind->value}] cannot be executed yet."),
             };
 
@@ -98,8 +104,9 @@ class ExecuteDocument
 
     /**
      * Put the opening stock in place, each line at its own location and at its cost per piece,
-     * put the opening cash in the register per method and open the loans already running.
-     * Opening loans move no money: the opening cash already reflects them.
+     * put the opening cash in the register per method, open the loans already running and
+     * record the debts already owed. Opening loans and debts move no money: the opening cash
+     * already reflects them.
      *
      * @param  array<int, DocumentLine>  $lines
      */
@@ -120,17 +127,77 @@ class ExecuteDocument
         foreach ($document->openingLoans()->get() as $openingLoan) {
             $this->loans->openExisting($user, $openingLoan);
         }
+
+        foreach ($document->openingDebts()->get() as $openingDebt) {
+            $this->debts->add($user, $openingDebt->counterparty_id, $openingDebt->side, DebtEntryType::OpeningBalance, $openingDebt->amount, $document->id);
+        }
     }
 
     /**
-     * Throw one error per failing line field, keyed like the form (`lines.N.field`).
+     * Bring the purchased pieces into the document's location, each line blending its price
+     * into the product's average cost. The planned payments leave the register per method;
+     * whatever stays unpaid becomes debt to the supplier.
+     *
+     * @param  array<int, DocumentLine>  $lines
+     */
+    private function executePurchase(Document $document, User $user, array $lines): void
+    {
+        $this->validateLines(
+            $lines,
+            fn (DocumentLine $line) => $line->price === null ? ['price' => __('Narxni kiriting.')] : [],
+            __('Barcha narxlarni kiriting.'),
+        );
+
+        $payments = $document->payments()->get();
+        $paid = array_reduce($payments->all(), fn (string $sum, DocumentPayment $payment) => bcadd($sum, $payment->amount, 2), '0.00');
+        $unpaid = bcsub($this->total($lines), $paid, 2);
+
+        if (bccomp($unpaid, '0', 2) < 0) {
+            throw ValidationException::withMessages(['payments' => __("To'lov summasi jamidan oshib ketdi.")]);
+        }
+
+        foreach ($lines as $line) {
+            $this->stock->receive($line, (int) $document->location_id, $line->quantity, $line->price);
+        }
+
+        foreach ($payments as $payment) {
+            $this->register->record(
+                $user,
+                CashOperationType::PurchasePayment,
+                $payment->payment_method,
+                $payment->amount,
+                counterpartyId: $document->counterparty_id,
+                documentId: $document->id,
+                errorKey: "payments.{$payment->payment_method->value}",
+            );
+        }
+
+        if (bccomp($unpaid, '0', 2) > 0) {
+            $this->debts->add($user, (int) $document->counterparty_id, DebtSide::Supplier, DebtEntryType::Purchase, $unpaid, $document->id);
+        }
+    }
+
+    /**
+     * Get the sum of the lines' quantity × price.
+     *
+     * @param  array<int, DocumentLine>  $lines
+     * @return numeric-string
+     */
+    private function total(array $lines): string
+    {
+        return array_reduce($lines, fn (string $total, DocumentLine $line) => bcadd($total, bcmul((string) $line->quantity, $line->price ?? '0', 2), 2), '0.00');
+    }
+
+    /**
+     * Throw one error per failing line field, keyed like the form (`lines.N.field`), led by
+     * an optional document-level summary.
      *
      * @param  array<int, DocumentLine>  $lines
      * @param  Closure(DocumentLine): array<string, string>  $check
      *
      * @throws ValidationException
      */
-    private function validateLines(array $lines, Closure $check): void
+    private function validateLines(array $lines, Closure $check, ?string $summary = null): void
     {
         $errors = [];
 
@@ -141,7 +208,7 @@ class ExecuteDocument
         }
 
         if ($errors !== []) {
-            throw ValidationException::withMessages($errors);
+            throw ValidationException::withMessages($summary === null ? $errors : ['document' => $summary, ...$errors]);
         }
     }
 }

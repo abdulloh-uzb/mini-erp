@@ -10,7 +10,9 @@ use App\Http\Controllers\LoanController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\OpeningBalanceController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\StockReportController;
+use App\Http\Controllers\SupplierDebtController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
@@ -34,6 +36,15 @@ Route::middleware(['auth', 'store'])->group(function () {
         Route::put('products/{product}', [ProductController::class, 'update'])->name('products.update');
         Route::post('products/{product}/archive', [ProductController::class, 'archive'])->name('products.archive');
         Route::post('products/{product}/unarchive', [ProductController::class, 'unarchive'])->name('products.unarchive');
+    });
+
+    Route::middleware('can:'.StorePermission::PurchaseDraft->value)->group(function () {
+        Route::get('purchases', [PurchaseController::class, 'index'])->name('purchases.index');
+        Route::get('purchases/create', [PurchaseController::class, 'create'])->name('purchases.create');
+        Route::post('purchases', [PurchaseController::class, 'store'])->name('purchases.store');
+        Route::get('purchases/{purchase}', [PurchaseController::class, 'show'])->name('purchases.show');
+        Route::put('purchases/{purchase}', [PurchaseController::class, 'update'])->name('purchases.update');
+        Route::delete('purchases/{purchase}', [PurchaseController::class, 'destroy'])->name('purchases.destroy');
     });
 
     Route::get('stock', StockReportController::class)
@@ -60,6 +71,11 @@ Route::middleware(['auth', 'store'])->group(function () {
         ->middleware('can:'.StorePermission::ExpenseCreate->value)->name('cash.operations.store');
     Route::post('cash/operations/{operation}/reverse', [CashOperationController::class, 'reverse'])
         ->middleware('can:'.StorePermission::CashOperationReverse->value)->name('cash.operations.reverse');
+
+    Route::middleware('can:'.StorePermission::SupplierDebtsManage->value)->group(function () {
+        Route::get('supplier-debts', [SupplierDebtController::class, 'index'])->name('supplier-debts.index');
+        Route::post('supplier-debts/payments', [SupplierDebtController::class, 'pay'])->name('supplier-debts.payments.store');
+    });
 
     Route::middleware('can:'.StorePermission::LoansManage->value)->group(function () {
         Route::get('loans', [LoanController::class, 'index'])->name('loans.index');

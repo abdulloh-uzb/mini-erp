@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Actions\Cash\CashRegister;
+use App\Actions\Cash\DebtLedger;
 use App\Enums\CashOperationType;
 use App\Enums\CategoryDirection;
+use App\Enums\DebtSide;
 use App\Enums\PaymentMethod;
 use App\Enums\StorePermission;
 use App\Http\Requests\StoreCashOperationRequest;
@@ -18,14 +20,15 @@ use Inertia\Response;
 
 /**
  * The Kassa page: the balance per payment method (owner only, D7), the list of cash
- * operations for everyone, and the expense / income form behind + Chiqim / + Kirim.
+ * operations for everyone, and the expense / income form behind + Chiqim / + Kirim, where
+ * the owner can also pay a supplier.
  */
 class CashOperationController extends Controller
 {
     /**
      * Show the balance strip and the filtered operations, newest first.
      */
-    public function index(Request $request, CashRegister $register): Response
+    public function index(Request $request, CashRegister $register, DebtLedger $debts): Response
     {
         $user = $request->user();
         $filters = [
@@ -77,6 +80,7 @@ class CashOperationController extends Controller
                 'expense' => $this->categoryOptions($categories, CategoryDirection::Expense),
                 'income' => $this->categoryOptions($categories, CategoryDirection::Income),
             ],
+            ...($user->can(StorePermission::SupplierDebtsManage->value) ? ['suppliers' => $debts->debtors($user->team_id, DebtSide::Supplier)] : []),
         ]);
     }
 

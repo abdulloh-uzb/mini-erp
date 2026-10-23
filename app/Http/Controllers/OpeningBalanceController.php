@@ -22,8 +22,8 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * The store's one opening balance (owner only), with its Tovarlar, Kassa and Qarzlar
- * sections: saved as often as needed, executed once.
+ * The store's one opening balance (owner only), with its Tovarlar, Kassa, Yetkazib beruvchi
+ * qarzlari and Qarzlar sections: saved as often as needed, executed once.
  * Until it is executed, or the owner says there is none, no document can be executed (D13).
  */
 class OpeningBalanceController extends Controller
@@ -33,7 +33,7 @@ class OpeningBalanceController extends Controller
      */
     public function show(Request $request): Response
     {
-        $document = $this->openingBalance()?->load(['lines.product', 'lines.location.parent', 'payments', 'openingLoans.counterparty', 'author', 'executor']);
+        $document = $this->openingBalance()?->load(['lines.product', 'lines.location.parent', 'payments', 'openingLoans.counterparty', 'openingDebts.counterparty', 'author', 'executor']);
 
         return Inertia::render('opening-balance/show', [
             'document' => $document ? DocumentResource::make($document)->resolve($request) : null,
@@ -148,6 +148,8 @@ class OpeningBalanceController extends Controller
 
             $document->openingLoans()->delete();
             $document->openingLoans()->createMany($request->openingLoans());
+            $document->openingDebts()->delete();
+            $document->openingDebts()->createMany($request->openingSupplierDebts());
 
             return $document;
         });

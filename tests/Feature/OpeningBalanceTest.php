@@ -1,9 +1,14 @@
 <?php
 
 use App\Actions\Cash\CashRegister;
+use App\Actions\Cash\DebtLedger;
+use App\Enums\DebtEntryType;
+use App\Enums\DebtSide;
 use App\Enums\DocumentKind;
 use App\Enums\DocumentStatus;
+use App\Models\CashOperation;
 use App\Models\Counterparty;
+use App\Models\DebtEntry;
 use App\Models\Document;
 use App\Models\DocumentLine;
 use App\Models\Loan;
@@ -14,11 +19,11 @@ use App\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
 
 /**
- * @return array{note: string|null, lines: array<int, array<string, mixed>>, payments: array<string, string|null>, loans: array<int, array<string, mixed>>}
+ * @return array{note: string|null, lines: array<int, array<string, mixed>>, payments: array<string, string|null>, loans: array<int, array<string, mixed>>, supplier_debts: array<int, array<string, mixed>>}
  */
-function openingBalanceInput(array $lines, ?string $note = null, array $payments = [], array $loans = []): array
+function openingBalanceInput(array $lines, ?string $note = null, array $payments = [], array $loans = [], array $supplierDebts = []): array
 {
-    return ['note' => $note, 'lines' => $lines, 'payments' => $payments, 'loans' => $loans];
+    return ['note' => $note, 'lines' => $lines, 'payments' => $payments, 'loans' => $loans, 'supplier_debts' => $supplierDebts];
 }
 
 describe('show', function () {
@@ -156,6 +161,55 @@ describe('kassa and loans', function () {
 
         expect(app(CashRegister::class)->balances($owner->team))->toBe(['cash' => '500000.00', 'card' => '20000.00', 'bank_transfer' => '0.00'])
             ->and(Loan::query()->sole()->balance())->toBe('100000.00');
+    });
+});
+
+describe('supplier debts', function () {
+    test('the owner saves what the store already owed each supplier with the draft', function () {
+        $owner = User::factory()->create();
+        $supplier = Counterparty::factory()->for($owner->team)->create(['name' => 'Coca-Cola Ichimliklar']);
+
+        $this->actingAs($owner)->put(route('opening-balance.update'), openingBalanceInput(
+            [],
+            supplierDebts: [['counterparty_id' => $supplier->id, 'amount' => '2500000']],
+        ))->assertSessionHasNoErrors();
+
+        $this->get(route('opening-balance.show'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('document.supplier_debts', 1)
+                ->where('document.supplier_debts.0.counterparty_id', $supplier->id)
+                ->where('document.supplier_debts.0.counterparty_name', 'Coca-Cola Ichimliklar')
+                ->where('document.supplier_debts.0.amount', '2500000.00'),
+            );
+    });
+
+    test('an opening supplier debt needs a counterparty of the store, once, and an amount above zero', function () {
+        $owner = User::factory()->create();
+        $foreign = Counterparty::factory()->create();
+        $supplier = Counterparty::factory()->for($owner->team)->create();
+
+        $this->actingAs($owner)->put(route('opening-balance.update'), openingBalanceInput(
+            [],
+            supplierDebts: [
+                ['counterparty_id' => $foreign->id, 'amount' => '0'],
+                ['counterparty_id' => $supplier->id, 'amount' => '10'],
+                ['counterparty_id' => $supplier->id, 'amount' => '20'],
+            ],
+        ))->assertSessionHasErrors(['supplier_debts.0.counterparty_id', 'supplier_debts.0.amount', 'supplier_debts.2.counterparty_id']);
+    });
+
+    test('executing turns opening supplier debts into supplier debt without moving money', function () {
+        $owner = User::factory()->create();
+        $supplier = Counterparty::factory()->for($owner->team)->create();
+
+        $this->actingAs($owner)->post(route('opening-balance.execute'), openingBalanceInput(
+            [],
+            supplierDebts: [['counterparty_id' => $supplier->id, 'amount' => '750000.50']],
+        ))->assertSessionHasNoErrors();
+
+        expect(app(DebtLedger::class)->balance($supplier, DebtSide::Supplier))->toBe('750000.50')
+            ->and(DebtEntry::query()->sole()->type)->toBe(DebtEntryType::OpeningBalance)
+            ->and(CashOperation::query()->count())->toBe(0);
     });
 });
 

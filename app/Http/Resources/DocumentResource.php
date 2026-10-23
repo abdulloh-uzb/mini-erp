@@ -2,9 +2,12 @@
 
 namespace App\Http\Resources;
 
+use App\Enums\DebtSide;
+use App\Enums\StorePermission;
 use App\Models\Document;
 use App\Models\DocumentLine;
 use App\Models\DocumentPayment;
+use App\Models\OpeningDebt;
 use App\Models\OpeningLoan;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -12,7 +15,10 @@ use Illuminate\Http\Resources\Json\JsonResource;
 /**
  * A document as the shared document form shows it: header, audit (created by / executed by)
  * and lines. Load `lines.product`, `lines.location.parent`, `author` and `executor` first;
- * `payments` and `openingLoans.counterparty` are included when loaded.
+ * `location.parent`, `counterparty`, `payments`, `openingLoans.counterparty` and
+ * `openingDebts.counterparty` are included
+ * when loaded. Where prices are costs (purchases), users who may not view costs get neither
+ * prices nor payments.
  *
  * @mixin Document
  */
@@ -25,11 +31,17 @@ class DocumentResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $showPrices = ! $this->kind->pricesAreCosts() || $request->user()->can(StorePermission::CostsView->value);
+
         return [
             'id' => $this->id,
             'kind' => $this->kind,
             'number' => $this->number,
             'status' => $this->status,
+            'location_id' => $this->location_id,
+            'location_name' => $this->whenLoaded('location', fn () => $this->location?->fullName()),
+            'counterparty_id' => $this->counterparty_id,
+            'counterparty_name' => $this->whenLoaded('counterparty', fn () => $this->counterparty?->name),
             'note' => $this->note,
             'author' => $this->author->name,
             'executor' => $this->executor?->name,
@@ -43,9 +55,9 @@ class DocumentResource extends JsonResource
                 'location_name' => $line->location?->fullName(),
                 'quantity' => $line->quantity,
                 'pieces_per_block' => $line->pieces_per_block,
-                'price' => $line->price,
+                ...($showPrices ? ['price' => $line->price] : []),
             ])->all(),
-            'payments' => $this->whenLoaded('payments', fn () => $this->payments
+            'payments' => $this->when($showPrices && $this->relationLoaded('payments'), fn () => $this->payments
                 ->mapWithKeys(fn (DocumentPayment $payment) => [$payment->payment_method->value => $payment->amount])
                 ->all()),
             'loans' => $this->whenLoaded('openingLoans', fn () => $this->openingLoans->map(fn (OpeningLoan $loan) => [
@@ -57,6 +69,12 @@ class DocumentResource extends JsonResource
                 'due_date' => $loan->due_date?->toDateString(),
                 'note' => $loan->note,
             ])->all()),
+            'supplier_debts' => $this->whenLoaded('openingDebts', fn () => $this->openingDebts->where('side', DebtSide::Supplier)->map(fn (OpeningDebt $debt) => [
+                'id' => $debt->id,
+                'counterparty_id' => $debt->counterparty_id,
+                'counterparty_name' => $debt->counterparty->name,
+                'amount' => $debt->amount,
+            ])->values()->all()),
         ];
     }
 }

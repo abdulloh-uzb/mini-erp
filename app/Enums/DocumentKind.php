@@ -32,6 +32,15 @@ enum DocumentKind: string
     }
 
     /**
+     * Determine if the kind's prices are purchase prices or costs, which only users who may view
+     * costs receive. Sale prices are not.
+     */
+    public function pricesAreCosts(): bool
+    {
+        return in_array($this, [self::Purchase, self::SupplierReturn, self::OpeningBalance], true);
+    }
+
+    /**
      * Get the permission needed to create, edit and delete drafts of this kind.
      */
     public function draftPermission(): StorePermission

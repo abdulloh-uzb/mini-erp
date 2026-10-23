@@ -37,9 +37,11 @@ use Illuminate\Support\Facades\DB;
  * @property Carbon|null $executed_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
+ * @property numeric-string|null $total
  * @property-read Collection<int, DocumentLine> $lines
  * @property-read Collection<int, DocumentPayment> $payments
  * @property-read Collection<int, OpeningLoan> $openingLoans
+ * @property-read Collection<int, OpeningDebt> $openingDebts
  * @property-read Location|null $location
  * @property-read Location|null $destinationLocation
  * @property-read Counterparty|null $counterparty
@@ -116,6 +118,17 @@ class Document extends Model
     }
 
     /**
+     * Get the customer and supplier debts already running when the store started (the opening
+     * balance's debt tabs).
+     *
+     * @return HasMany<OpeningDebt, $this>
+     */
+    public function openingDebts(): HasMany
+    {
+        return $this->hasMany(OpeningDebt::class)->orderBy('id');
+    }
+
+    /**
      * Get the location the document's goods leave or enter.
      *
      * @return BelongsTo<Location, $this>
@@ -174,6 +187,20 @@ class Document extends Model
     protected function ofKind(Builder $query, DocumentKind $kind): void
     {
         $query->where($this->qualifyColumn('kind'), $kind);
+    }
+
+    /**
+     * Load the sum of the lines' quantity × price as `total` (unpriced lines count as nothing).
+     *
+     * @param  Builder<static>  $query
+     */
+    #[Scope]
+    protected function withTotal(Builder $query): void
+    {
+        $query->addSelect(['total' => DocumentLine::query()
+            ->selectRaw('sum(quantity * price)')
+            ->whereColumn('document_lines.document_id', 'documents.id'),
+        ]);
     }
 
     /**

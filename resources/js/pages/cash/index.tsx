@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import CashOperationController from '@/actions/App/Http/Controllers/CashOperationController';
+import SupplierDebtController from '@/actions/App/Http/Controllers/SupplierDebtController';
 import {
     CashOperationDialog,
     selectClassName,
@@ -55,6 +56,13 @@ type Category = {
     requires_note: boolean;
 };
 
+/** A supplier the store owes, offered for "Yetkazib beruvchiga to'lov" (owner only). */
+type OwedSupplier = {
+    id: number;
+    name: string;
+    balance: string;
+};
+
 type Filters = {
     from: string | null;
     to: string | null;
@@ -75,6 +83,7 @@ type Props = {
     authors: PickerOption[];
     counterparties: PickerOption[];
     categories: { expense: Category[]; income: Category[] };
+    suppliers?: OwedSupplier[];
 };
 
 export default function CashIndex({
@@ -86,6 +95,7 @@ export default function CashIndex({
     authors,
     counterparties,
     categories,
+    suppliers,
 }: Props) {
     const { can } = usePermissions();
     const canRecord = can('expense.create');
@@ -112,8 +122,9 @@ export default function CashIndex({
             <CategoryOperationDialog
                 title="Chiqim"
                 categoryLabel="Xarajat turi"
-                description="Kassadan chiqqan pul: xarajat yoki egasi olgan pul."
+                description="Kassadan chiqqan pul: xarajat, egasi olgan pul yoki yetkazib beruvchiga to'lov."
                 categories={categories.expense}
+                suppliers={suppliers}
                 methods={methods}
                 trigger={
                     <Button>
@@ -351,12 +362,17 @@ function CashFilters({
     );
 }
 
-/** + Kirim / + Chiqim: a category from the user's allowed list, amount, method, note. */
+/**
+ * + Kirim / + Chiqim: a category from the user's allowed list, amount, method, note. When
+ * suppliers are given, Chiqim also offers "Yetkazib beruvchiga to'lov", which pays a supplier
+ * through the supplier-debt form instead.
+ */
 function CategoryOperationDialog({
     title,
     categoryLabel,
     description,
     categories,
+    suppliers = [],
     methods,
     trigger,
 }: {
@@ -364,11 +380,17 @@ function CategoryOperationDialog({
     categoryLabel: string;
     description: string;
     categories: Category[];
+    suppliers?: OwedSupplier[];
     methods: EnumOption[];
     trigger: ReactNode;
 }) {
-    const [categoryId, setCategoryId] = useState(categories[0]?.id ?? null);
-    const category = categories.find((item) => item.id === categoryId);
+    const [choice, setChoice] = useState<number | 'supplier' | null>(
+        categories[0]?.id ?? null,
+    );
+    const [supplierId, setSupplierId] = useState(suppliers[0]?.id ?? null);
+    const paysSupplier = choice === 'supplier';
+    const category = categories.find((item) => item.id === choice);
+    const supplier = suppliers.find((item) => item.id === supplierId);
     const id = `cash-${title.toLowerCase()}-category`;
 
     return (
@@ -376,30 +398,75 @@ function CategoryOperationDialog({
             title={title}
             description={description}
             trigger={trigger}
-            form={CashOperationController.store.form()}
+            form={
+                paysSupplier
+                    ? SupplierDebtController.pay.form()
+                    : CashOperationController.store.form()
+            }
             methods={methods}
             noteRequired={category?.requires_note ?? false}
         >
             {(errors) => (
-                <div className="grid gap-2">
-                    <Label htmlFor={id}>{categoryLabel}</Label>
-                    <select
-                        id={id}
-                        name="expense_category_id"
-                        value={categoryId ?? ''}
-                        onChange={(event) =>
-                            setCategoryId(Number(event.target.value))
-                        }
-                        className={selectClassName}
-                    >
-                        {categories.map((item) => (
-                            <option key={item.id} value={item.id}>
-                                {item.name}
-                            </option>
-                        ))}
-                    </select>
-                    <InputError message={errors.expense_category_id} />
-                </div>
+                <>
+                    <div className="grid gap-2">
+                        <Label htmlFor={id}>{categoryLabel}</Label>
+                        <select
+                            id={id}
+                            name={
+                                paysSupplier ? undefined : 'expense_category_id'
+                            }
+                            value={choice ?? ''}
+                            onChange={(event) =>
+                                setChoice(
+                                    event.target.value === 'supplier'
+                                        ? 'supplier'
+                                        : Number(event.target.value),
+                                )
+                            }
+                            className={selectClassName}
+                        >
+                            {categories.map((item) => (
+                                <option key={item.id} value={item.id}>
+                                    {item.name}
+                                </option>
+                            ))}
+                            {suppliers.length > 0 && (
+                                <option value="supplier">
+                                    Yetkazib beruvchiga to'lov
+                                </option>
+                            )}
+                        </select>
+                        <InputError message={errors.expense_category_id} />
+                    </div>
+                    {paysSupplier && (
+                        <div className="grid gap-2">
+                            <Label htmlFor={`${id}-supplier`}>
+                                Yetkazib beruvchi
+                            </Label>
+                            <select
+                                id={`${id}-supplier`}
+                                name="counterparty_id"
+                                value={supplierId ?? ''}
+                                onChange={(event) =>
+                                    setSupplierId(Number(event.target.value))
+                                }
+                                className={selectClassName}
+                            >
+                                {suppliers.map((item) => (
+                                    <option key={item.id} value={item.id}>
+                                        {item.name}
+                                    </option>
+                                ))}
+                            </select>
+                            {supplier && (
+                                <p className="text-sm text-muted-foreground">
+                                    Qarz: {formatMoney(supplier.balance)}
+                                </p>
+                            )}
+                            <InputError message={errors.counterparty_id} />
+                        </div>
+                    )}
+                </>
             )}
         </CashOperationDialog>
     );

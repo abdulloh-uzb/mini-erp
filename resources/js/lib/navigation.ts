@@ -3,8 +3,10 @@ import {
     ClipboardList,
     Contact,
     HandCoins,
+    Landmark,
     LayoutGrid,
     Package,
+    ShoppingCart,
     Store,
     Users,
     Wallet,
@@ -19,7 +21,9 @@ import { index as loans } from '@/routes/loans';
 import { index as locations } from '@/routes/locations';
 import { show as openingBalance } from '@/routes/opening-balance';
 import { index as products } from '@/routes/products';
+import { index as purchases } from '@/routes/purchases';
 import { index as stock } from '@/routes/stock';
+import { index as supplierDebts } from '@/routes/supplier-debts';
 import type { NavGroup, StoreRole } from '@/types';
 
 /**
@@ -33,7 +37,17 @@ const storeNavigation: NavGroup[] = [
         items: [{ title: 'Bosh sahifa', href: dashboard(), icon: LayoutGrid }],
     },
     { title: 'Savdo', items: [] },
-    { title: 'Xarid', items: [] },
+    {
+        title: 'Xarid',
+        items: [
+            {
+                title: 'Xaridlar',
+                href: purchases(),
+                icon: ShoppingCart,
+                permission: 'purchase.draft',
+            },
+        ],
+    },
     {
         title: 'Ombor',
         items: [
@@ -65,6 +79,12 @@ const storeNavigation: NavGroup[] = [
                 href: cash(),
                 icon: Wallet,
                 permission: 'cash-operations.view',
+            },
+            {
+                title: 'Yetkazib beruvchi qarzlari',
+                href: supplierDebts(),
+                icon: Landmark,
+                permission: 'supplier-debts.manage',
             },
             {
                 title: 'Qarzlar',

@@ -8,7 +8,8 @@ export type DocumentLineData = {
     location_name: string | null;
     quantity: number;
     pieces_per_block: number;
-    price: string | null;
+    /** Absent where prices are costs (purchases) and the user may not view costs. */
+    price?: string | null;
 };
 
 /** A document as the shared document form receives it (DocumentResource). */
@@ -17,6 +18,10 @@ export type DocumentData = {
     kind: string;
     number: number;
     status: DocumentStatus;
+    location_id: number | null;
+    location_name?: string | null;
+    counterparty_id: number | null;
+    counterparty_name?: string | null;
     note: string | null;
     author: string;
     executor: string | null;
@@ -27,6 +32,15 @@ export type DocumentData = {
     payments?: Partial<Record<string, string>>;
     /** The opening balance's open loans (Qarzlar tab), when loaded. */
     loans?: OpeningLoanData[];
+    /** The opening balance's supplier debts (Yetkazib beruvchi qarzlari tab), when loaded. */
+    supplier_debts?: OpeningDebtData[];
+};
+
+export type OpeningDebtData = {
+    id: number;
+    counterparty_id: number;
+    counterparty_name: string;
+    amount: string;
 };
 
 export type OpeningLoanData = {
