@@ -15,11 +15,11 @@ use App\Models\DocumentLine;
 use App\Models\DocumentPayment;
 use App\Models\Team;
 use App\Models\User;
+use App\Support\Quantity;
 use Closure;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
-use LogicException;
 
 /**
  * The document execution module: the one way a document takes effect. In one transaction it
@@ -33,6 +33,7 @@ class ExecuteDocument
         private CashRegister $register,
         private LoanLedger $loans,
         private DebtLedger $debts,
+        private ReturnedQuantities $returned,
     ) {}
 
     /**
@@ -51,9 +52,10 @@ class ExecuteDocument
                 DocumentKind::OpeningBalance => $this->executeOpeningBalance($locked, $user, $lines->all()),
                 DocumentKind::Sale => $this->executeSale($locked, $user, $lines->all()),
                 DocumentKind::Purchase => $this->executePurchase($locked, $user, $lines->all()),
+                DocumentKind::SalesReturn => $this->executeSalesReturn($locked, $user, $lines->all()),
+                DocumentKind::SupplierReturn => $this->executeSupplierReturn($locked, $user, $lines->all()),
                 DocumentKind::Transfer => $this->executeTransfer($locked, $lines->all()),
                 DocumentKind::InventoryCount => $this->executeInventoryCount($locked, $lines->all()),
-                default => throw new LogicException("Documents of kind [{$locked->kind->value}] cannot be executed yet."),
             };
 
             $locked->update([
@@ -222,6 +224,148 @@ class ExecuteDocument
     }
 
     /**
+     * Bring the returned pieces back into the document's location at the sale line's stored
+     * cost, which blends into the average, and give back the sale price: first off the
+     * customer's debt, the rest paid out in the refund method (D11 applies).
+     *
+     * @param  array<int, DocumentLine>  $lines
+     */
+    private function executeSalesReturn(Document $document, User $user, array $lines): void
+    {
+        $total = $this->applyReturnLines($document, DocumentKind::Sale, $lines, function (DocumentLine $line, DocumentLine $sourceLine) use ($document) {
+            $this->stock->receive($line, (int) $document->location_id, $line->quantity, $sourceLine->unit_cost);
+            $line->update(['price' => $sourceLine->price, 'unit_cost' => $sourceLine->unit_cost]);
+
+            return [];
+        });
+
+        $this->settleReturn($document, $user, DebtSide::Customer, CashOperationType::SalesReturnRefund, $total);
+    }
+
+    /**
+     * Send the returned pieces back to the supplier from the document's location, which must
+     * hold them, taking them out of the average at the purchase line's price. The purchase
+     * price comes back: first off the supplier debt, the rest into the register.
+     *
+     * @param  array<int, DocumentLine>  $lines
+     */
+    private function executeSupplierReturn(Document $document, User $user, array $lines): void
+    {
+        $total = $this->applyReturnLines($document, DocumentKind::Purchase, $lines, function (DocumentLine $line, DocumentLine $sourceLine) use ($document) {
+            try {
+                $this->stock->issue($line, (int) $document->location_id, $line->quantity, $sourceLine->price);
+            } catch (InsufficientStock $exception) {
+                return ['pieces' => $this->shortStockMessage($exception, $line)];
+            }
+
+            $line->update(['price' => $sourceLine->price, 'unit_cost' => $sourceLine->price]);
+
+            return [];
+        });
+
+        $this->settleReturn($document, $user, DebtSide::Supplier, CashOperationType::SupplierReturnRefund, $total);
+    }
+
+    /**
+     * Check each return line against its source line and apply the ones with pieces. The source
+     * document is locked first, so two returns of it cannot together exceed what it moved. A
+     * line may give back at most the source line's pieces less what executed returns already
+     * gave back. Lines left at 0 are dropped once everything passed.
+     *
+     * @param  array<int, DocumentLine>  $lines
+     * @param  Closure(DocumentLine, DocumentLine): array<string, string>  $apply  effects of one line, or its errors
+     * @return numeric-string the value given back at the source prices
+     *
+     * @throws ValidationException
+     */
+    private function applyReturnLines(Document $document, DocumentKind $sourceKind, array $lines, Closure $apply): string
+    {
+        $source = Document::withoutGlobalScopes()
+            ->whereKey($document->source_document_id)
+            ->where('team_id', $document->team_id)
+            ->where('kind', $sourceKind)
+            ->where('status', DocumentStatus::Executed)
+            ->lockForUpdate()
+            ->first();
+
+        if ($source === null) {
+            throw ValidationException::withMessages(['document' => __('Qaytarish bajarilgan hujjatdan yaratiladi.')]);
+        }
+
+        if (array_sum(array_map(fn (DocumentLine $line) => $line->quantity, $lines)) === 0) {
+            throw ValidationException::withMessages(['lines' => __('Qaytariladigan miqdorni kiriting.')]);
+        }
+
+        $sourceLines = $source->lines()->get()->keyBy('id');
+        $returned = $this->returned->handle($source);
+        $total = '0.00';
+
+        $this->validateLines($lines, function (DocumentLine $line) use ($sourceLines, $returned, $apply, &$total) {
+            $sourceLine = $sourceLines->get($line->source_line_id);
+
+            if ($sourceLine === null || $sourceLine->product_id !== $line->product_id) {
+                return ['product_id' => __("Bu mahsulot manba hujjatda yo'q.")];
+            }
+
+            $returnable = $sourceLine->quantity - ($returned[$sourceLine->id] ?? 0);
+
+            if ($line->quantity > $returnable) {
+                return ['pieces' => __("Ko'pi bilan :quantity qaytarish mumkin", ['quantity' => Quantity::format($returnable, $line->pieces_per_block)])];
+            }
+
+            if ($line->quantity === 0) {
+                return [];
+            }
+
+            $total = bcadd($total, bcmul((string) $line->quantity, $sourceLine->price ?? '0', 2), 2);
+
+            return $apply($line, $sourceLine);
+        });
+
+        foreach ($lines as $line) {
+            if ($line->quantity === 0) {
+                $line->delete();
+            }
+        }
+
+        return $total;
+    }
+
+    /**
+     * Give a return's value back to the counterparty: off their debt on that side first, the
+     * rest as a cash operation in the document's refund method.
+     *
+     * @param  numeric-string  $total
+     *
+     * @throws ValidationException when a cash part has no method, or a refund exceeds the method's balance.
+     */
+    private function settleReturn(Document $document, User $user, DebtSide $side, CashOperationType $refundType, string $total): void
+    {
+        $reduced = $document->counterparty_id === null
+            ? '0.00'
+            : $this->debts->reduceByReturn($user, $document->counterparty_id, $side, $total, $document->id);
+        $rest = bcsub($total, $reduced, 2);
+
+        if (bccomp($rest, '0', 2) <= 0) {
+            return;
+        }
+
+        if ($document->refund_method === null) {
+            throw ValidationException::withMessages(['refund_method' => __("To'lov usulini tanlang.")]);
+        }
+
+        $this->register->record(
+            $user,
+            $refundType,
+            $document->refund_method,
+            $rest,
+            counterpartyId: $document->counterparty_id,
+            documentId: $document->id,
+            errorKey: 'refund_method',
+        );
+    }
+
+    /**
      * Move each line's pieces from the document's location to its destination. No money moves
      * and the average cost is unchanged. A line the source cannot cover names what is there.
      *
@@ -284,11 +428,7 @@ class ExecuteDocument
      */
     private function shortStockMessage(InsufficientStock $exception, DocumentLine $line): string
     {
-        $available = $line->pieces_per_block > 1
-            ? __(':blocks blok + :pieces dona', ['blocks' => intdiv($exception->available, $line->pieces_per_block), 'pieces' => $exception->available % $line->pieces_per_block])
-            : __(':pieces dona', ['pieces' => $exception->available]);
-
-        return __('Joyda yetarli emas. Qoldiq: :quantity.', ['quantity' => $available]);
+        return __('Joyda yetarli emas. Qoldiq: :quantity.', ['quantity' => Quantity::format($exception->available, $line->pieces_per_block)]);
     }
 
     /**

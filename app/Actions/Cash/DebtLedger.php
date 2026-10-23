@@ -106,6 +106,28 @@ class DebtLedger
     }
 
     /**
+     * Lower the counterparty's debt on one side by up to the amount a return gives back; the
+     * counterparty row is locked. A debt smaller than the amount is cleared.
+     *
+     * @param  numeric-string  $amount  zero or more
+     * @return numeric-string the part that went to the debt
+     */
+    public function reduceByReturn(User $author, int $counterpartyId, DebtSide $side, string $amount, int $documentId): string
+    {
+        $locked = Counterparty::withoutGlobalScopes()->whereKey($counterpartyId)->lockForUpdate()->firstOrFail();
+        $debt = $this->balance($locked, $side);
+        $reduced = bccomp($amount, $debt, 2) < 0 ? bcadd($amount, '0', 2) : $debt;
+
+        if (bccomp($reduced, '0', 2) <= 0) {
+            return '0.00';
+        }
+
+        $this->append($author, $locked->id, $side, DebtEntryType::Return, bcsub('0', $reduced, 2), documentId: $documentId);
+
+        return $reduced;
+    }
+
+    /**
      * Declare part or all of a customer's debt uncollectable: it lowers the debt and counts
      * as an Umidsiz qarz expense, and no money moves.
      *

@@ -12,6 +12,7 @@ import {
     ScanBarcode,
     ShoppingCart,
     Store,
+    Undo2,
     Users,
     Wallet,
     Warehouse,
@@ -29,8 +30,10 @@ import { show as openingBalance } from '@/routes/opening-balance';
 import { index as products } from '@/routes/products';
 import { index as purchases } from '@/routes/purchases';
 import { create as sale } from '@/routes/sales';
+import { index as salesReturns } from '@/routes/sales-returns';
 import { index as stock } from '@/routes/stock';
 import { index as supplierDebts } from '@/routes/supplier-debts';
+import { index as supplierReturns } from '@/routes/supplier-returns';
 import { index as transfers } from '@/routes/transfers';
 import type { NavGroup, StoreRole } from '@/types';
 
@@ -53,6 +56,12 @@ const storeNavigation: NavGroup[] = [
                 icon: ScanBarcode,
                 permission: 'sale.draft',
             },
+            {
+                title: 'Qaytarishlar',
+                href: salesReturns(),
+                icon: Undo2,
+                permission: 'sales-return.draft',
+            },
         ],
     },
     {
@@ -63,6 +72,12 @@ const storeNavigation: NavGroup[] = [
                 href: purchases(),
                 icon: ShoppingCart,
                 permission: 'purchase.draft',
+            },
+            {
+                title: 'Yetkazib beruvchiga qaytarishlar',
+                href: supplierReturns(),
+                icon: Undo2,
+                permission: 'supplier-return.manage',
             },
         ],
     },

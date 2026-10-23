@@ -14,8 +14,10 @@ use App\Http\Controllers\OpeningBalanceController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\SaleController;
+use App\Http\Controllers\SalesReturnController;
 use App\Http\Controllers\StockReportController;
 use App\Http\Controllers\SupplierDebtController;
+use App\Http\Controllers\SupplierReturnController;
 use App\Http\Controllers\TransferController;
 use Illuminate\Support\Facades\Route;
 
@@ -50,6 +52,15 @@ Route::middleware(['auth', 'store'])->group(function () {
         Route::delete('sales/{sale}', [SaleController::class, 'destroy'])->name('sales.destroy');
     });
 
+    Route::middleware('can:'.StorePermission::SalesReturnDraft->value)->group(function () {
+        Route::get('sales-returns', [SalesReturnController::class, 'index'])->name('sales-returns.index');
+        Route::get('sales-returns/create', [SalesReturnController::class, 'create'])->name('sales-returns.create');
+        Route::post('sales-returns', [SalesReturnController::class, 'store'])->name('sales-returns.store');
+        Route::get('sales-returns/{document}', [SalesReturnController::class, 'show'])->name('sales-returns.show');
+        Route::put('sales-returns/{document}', [SalesReturnController::class, 'update'])->name('sales-returns.update');
+        Route::delete('sales-returns/{document}', [SalesReturnController::class, 'destroy'])->name('sales-returns.destroy');
+    });
+
     Route::middleware('can:'.StorePermission::PurchaseDraft->value)->group(function () {
         Route::get('purchases', [PurchaseController::class, 'index'])->name('purchases.index');
         Route::get('purchases/create', [PurchaseController::class, 'create'])->name('purchases.create');
@@ -57,6 +68,15 @@ Route::middleware(['auth', 'store'])->group(function () {
         Route::get('purchases/{purchase}', [PurchaseController::class, 'show'])->name('purchases.show');
         Route::put('purchases/{purchase}', [PurchaseController::class, 'update'])->name('purchases.update');
         Route::delete('purchases/{purchase}', [PurchaseController::class, 'destroy'])->name('purchases.destroy');
+    });
+
+    Route::middleware('can:'.StorePermission::SupplierReturnManage->value)->group(function () {
+        Route::get('supplier-returns', [SupplierReturnController::class, 'index'])->name('supplier-returns.index');
+        Route::get('supplier-returns/create', [SupplierReturnController::class, 'create'])->name('supplier-returns.create');
+        Route::post('supplier-returns', [SupplierReturnController::class, 'store'])->name('supplier-returns.store');
+        Route::get('supplier-returns/{document}', [SupplierReturnController::class, 'show'])->name('supplier-returns.show');
+        Route::put('supplier-returns/{document}', [SupplierReturnController::class, 'update'])->name('supplier-returns.update');
+        Route::delete('supplier-returns/{document}', [SupplierReturnController::class, 'destroy'])->name('supplier-returns.destroy');
     });
 
     Route::middleware('can:'.StorePermission::TransferDraft->value)->group(function () {

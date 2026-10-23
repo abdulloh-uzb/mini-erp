@@ -1,7 +1,8 @@
-import { Head, router, useForm } from '@inertiajs/react';
-import { Plus } from 'lucide-react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
+import { Plus, Undo2 } from 'lucide-react';
 import { useMemo } from 'react';
 import PurchaseController from '@/actions/App/Http/Controllers/PurchaseController';
+import SupplierReturnController from '@/actions/App/Http/Controllers/SupplierReturnController';
 import AlertError from '@/components/alert-error';
 import { selectClassName } from '@/components/cash-form';
 import CounterpartyQuickCreate from '@/components/counterparty-quick-create';
@@ -104,6 +105,7 @@ function ReadOnlyPurchase({
     document: DocumentData;
     methods: EnumOption[];
 }) {
+    const { can } = usePermissions();
     const showPrices = document.payments !== undefined;
     const total = document.lines.reduce(
         (sum, line) => sum + line.quantity * Number(line.price ?? 0),
@@ -140,6 +142,20 @@ function ReadOnlyPurchase({
                     Egasi bajarishini kutmoqda.
                 </p>
             )}
+            {document.status === 'executed' &&
+                can('supplier-return.manage') && (
+                    <div>
+                        <Button variant="outline" asChild>
+                            <Link
+                                href={SupplierReturnController.create({
+                                    query: { source: document.id },
+                                })}
+                            >
+                                <Undo2 /> Qaytarish yaratish
+                            </Link>
+                        </Button>
+                    </div>
+                )}
         </div>
     );
 }

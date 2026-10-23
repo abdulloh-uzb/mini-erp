@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Concerns\BelongsToStore;
 use App\Enums\DocumentKind;
 use App\Enums\DocumentStatus;
+use App\Enums\PaymentMethod;
 use Database\Factories\DocumentFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
@@ -31,6 +32,7 @@ use Illuminate\Support\Facades\DB;
  * @property int|null $destination_location_id
  * @property int|null $counterparty_id
  * @property int|null $source_document_id
+ * @property PaymentMethod|null $refund_method
  * @property string|null $note
  * @property int $author_id
  * @property int|null $executor_id
@@ -45,12 +47,13 @@ use Illuminate\Support\Facades\DB;
  * @property-read Location|null $location
  * @property-read Location|null $destinationLocation
  * @property-read Counterparty|null $counterparty
+ * @property-read Document|null $source
  * @property-read User $author
  * @property-read User|null $executor
  */
 #[Fillable([
     'team_id', 'kind', 'status', 'number', 'location_id', 'destination_location_id', 'counterparty_id',
-    'source_document_id', 'note', 'author_id', 'executor_id', 'executed_at',
+    'source_document_id', 'refund_method', 'note', 'author_id', 'executor_id', 'executed_at',
 ])]
 class Document extends Model
 {
@@ -159,6 +162,16 @@ class Document extends Model
     }
 
     /**
+     * Get the executed sale or purchase a return comes from.
+     *
+     * @return BelongsTo<Document, $this>
+     */
+    public function source(): BelongsTo
+    {
+        return $this->belongsTo(Document::class, 'source_document_id');
+    }
+
+    /**
      * Get the user who created the document.
      *
      * @return BelongsTo<User, $this>
@@ -244,6 +257,7 @@ class Document extends Model
             'status' => DocumentStatus::class,
             'number' => 'integer',
             'executed_at' => 'datetime',
+            'refund_method' => PaymentMethod::class,
         ];
     }
 }

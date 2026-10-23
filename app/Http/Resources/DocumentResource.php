@@ -19,7 +19,8 @@ use Illuminate\Http\Resources\MissingValue;
  * and lines. Load `lines.product`, `lines.location.parent`, `author` and `executor` first;
  * `location.parent`, `counterparty`, `payments`, `openingLoans.counterparty` and
  * `openingDebts.counterparty` are included
- * when loaded, as is `destinationLocation.parent` (transfers). Where prices are costs
+ * when loaded, as is `destinationLocation.parent` (transfers). Returns carry their source
+ * document, refund method and source lines. Where prices are costs
  * (purchases), users who may not view costs get neither prices nor payments. Inventory count
  * lines carry expected quantities only for users who may execute counts (blind count, D6),
  * and their average cost and difference value only when those users may also view costs.
@@ -50,6 +51,8 @@ class DocumentResource extends JsonResource
             'destination_location_name' => $this->whenLoaded('destinationLocation', fn () => $this->destinationLocation?->fullName()),
             'counterparty_id' => $this->counterparty_id,
             'counterparty_name' => $this->whenLoaded('counterparty', fn () => $this->counterparty?->name),
+            'source_document_id' => $this->source_document_id,
+            'refund_method' => $this->refund_method,
             'note' => $this->note,
             'author' => $this->author->name,
             'executor' => $this->executor?->name,
@@ -61,6 +64,7 @@ class DocumentResource extends JsonResource
                 'product_name' => $line->product->name,
                 'location_id' => $line->location_id,
                 'location_name' => $line->location?->fullName(),
+                'source_line_id' => $line->source_line_id,
                 'quantity' => $line->quantity,
                 'pieces_per_block' => $line->pieces_per_block,
                 ...($showPrices ? ['price' => $line->price] : []),

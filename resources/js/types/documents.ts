@@ -6,6 +6,8 @@ export type DocumentLineData = {
     product_name: string;
     location_id: number | null;
     location_name: string | null;
+    /** Return: the sale or purchase line given back. */
+    source_line_id: number | null;
     quantity: number;
     pieces_per_block: number;
     /** Absent where prices are costs (purchases) and the user may not view costs. */
@@ -31,6 +33,10 @@ export type DocumentData = {
     destination_location_name?: string | null;
     counterparty_id: number | null;
     counterparty_name?: string | null;
+    /** Return: the executed sale or purchase it comes from. */
+    source_document_id: number | null;
+    /** Return: the payment method of the part not taken off the debt. */
+    refund_method: string | null;
     note: string | null;
     author: string;
     executor: string | null;

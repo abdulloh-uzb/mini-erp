@@ -62,17 +62,31 @@ class StockLedger
     }
 
     /**
-     * Take pieces of the line's product out of a location. The average cost is unchanged.
+     * Take pieces of the line's product out of a location. The average cost is unchanged,
+     * unless the pieces leave at a known cost (a supplier return): then they are taken out of
+     * it, (on hand × average − quantity × cost) / (on hand − quantity), never below zero, and
+     * the average stays as it was when nothing is left on hand.
+     *
+     * @param  numeric-string|null  $unitCost
      *
      * @throws InsufficientStock when the location holds fewer pieces; nothing is written.
      */
-    public function issue(DocumentLine $line, int $locationId, int $quantity): void
+    public function issue(DocumentLine $line, int $locationId, int $quantity, ?string $unitCost = null): void
     {
-        $this->lockedCost($line->document->team_id, $line->product_id);
+        $cost = $this->lockedCost($line->document->team_id, $line->product_id);
         $balance = $this->lockedBalance($line, $locationId);
 
         if ($balance->quantity < $quantity) {
             throw new InsufficientStock($balance->quantity, $quantity);
+        }
+
+        $onHand = $this->onHand($line);
+
+        if ($unitCost !== null && $onHand > $quantity) {
+            $value = bcsub(bcmul((string) $onHand, $cost->average_cost, self::COST_SCALE), bcmul((string) $quantity, $unitCost, self::COST_SCALE), self::COST_SCALE);
+            $average = bcdiv($value, (string) ($onHand - $quantity), self::COST_SCALE + 2);
+
+            $cost->update(['average_cost' => bccomp($average, '0', self::COST_SCALE + 2) > 0 ? $this->round($average) : '0']);
         }
 
         $balance->quantity -= $quantity;

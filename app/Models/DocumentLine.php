@@ -14,12 +14,14 @@ use Illuminate\Support\Carbon;
  * was entered (Q28). The location is set only where it varies per line (opening balance);
  * otherwise the document's location applies. On an inventory count the quantity is what was
  * counted; execution stores the expected quantity it recomputed, the average cost as the unit
- * cost and the difference valued at it (negative: shortage, positive: surplus) for P&L.
+ * cost and the difference valued at it (negative: shortage, positive: surplus) for P&L. On a
+ * return the source line is the sale or purchase line it gives back.
  *
  * @property int $id
  * @property int $document_id
  * @property int $product_id
  * @property int|null $location_id
+ * @property int|null $source_line_id
  * @property int $quantity
  * @property int|null $expected_quantity
  * @property int $pieces_per_block
@@ -31,9 +33,10 @@ use Illuminate\Support\Carbon;
  * @property-read Document $document
  * @property-read Product $product
  * @property-read Location|null $location
+ * @property-read DocumentLine|null $sourceLine
  */
 #[Fillable([
-    'document_id', 'product_id', 'location_id', 'quantity', 'expected_quantity', 'pieces_per_block', 'price', 'unit_cost',
+    'document_id', 'product_id', 'location_id', 'source_line_id', 'quantity', 'expected_quantity', 'pieces_per_block', 'price', 'unit_cost',
     'difference_value',
 ])]
 class DocumentLine extends Model
@@ -69,6 +72,16 @@ class DocumentLine extends Model
     public function location(): BelongsTo
     {
         return $this->belongsTo(Location::class);
+    }
+
+    /**
+     * Get the sale or purchase line a return line gives back.
+     *
+     * @return BelongsTo<DocumentLine, $this>
+     */
+    public function sourceLine(): BelongsTo
+    {
+        return $this->belongsTo(DocumentLine::class, 'source_line_id');
     }
 
     /**

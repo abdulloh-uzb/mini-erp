@@ -4,7 +4,7 @@ namespace App\Enums;
 
 /**
  * Why a debt entry moved a balance: debt arising from a document or the opening balance,
- * a payment reducing it, or a write-off of debt that will not be collected.
+ * a payment or a return reducing it, or a write-off of debt that will not be collected.
  */
 enum DebtEntryType: string
 {
@@ -12,6 +12,7 @@ enum DebtEntryType: string
     case Purchase = 'purchase';
     case OpeningBalance = 'opening_balance';
     case Payment = 'payment';
+    case Return = 'return';
     case WriteOff = 'write_off';
 
     /**
@@ -24,6 +25,7 @@ enum DebtEntryType: string
             self::Purchase => 'Xarid (qarz qismi)',
             self::OpeningBalance => "Boshlang'ich qarz",
             self::Payment => "Qarz to'lovi",
+            self::Return => 'Qaytarish (qarzdan kamaydi)',
             self::WriteOff => 'Hisobdan chiqarildi (Umidsiz qarz)',
         };
     }

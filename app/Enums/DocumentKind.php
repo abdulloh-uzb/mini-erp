@@ -41,6 +41,18 @@ enum DocumentKind: string
     }
 
     /**
+     * Get the kind of executed document a return of this kind is created from, if it is a return.
+     */
+    public function returnSource(): ?self
+    {
+        return match ($this) {
+            self::SalesReturn => self::Sale,
+            self::SupplierReturn => self::Purchase,
+            default => null,
+        };
+    }
+
+    /**
      * Get the permission needed to create, edit and delete drafts of this kind.
      */
     public function draftPermission(): StorePermission
