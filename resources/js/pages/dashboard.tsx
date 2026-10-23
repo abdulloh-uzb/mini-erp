@@ -9,7 +9,7 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
-import { formatDateTime, formatMoney } from '@/lib/format';
+import { formatDateTime, formatMoney, paymentMethodLabels } from '@/lib/format';
 import { dashboard } from '@/routes';
 import { index as cash } from '@/routes/cash';
 import { index as customerDebts } from '@/routes/customer-debts';
@@ -65,12 +65,6 @@ type Props = {
     employee?: Employee;
 };
 
-const methodLabels: Record<string, string> = {
-    cash: 'Naqd',
-    card: 'Karta',
-    bank_transfer: "Bank o'tkazmasi",
-};
-
 function Figure({ label, value }: { label: string; value: string }) {
     return (
         <Card>
@@ -112,7 +106,7 @@ function OwnerHome({ owner }: { owner: Owner }) {
                     {Object.entries(cashBalances).map(([method, amount]) => (
                         <Figure
                             key={method}
-                            label={methodLabels[method] ?? method}
+                            label={paymentMethodLabels[method] ?? method}
                             value={formatMoney(amount)}
                         />
                     ))}

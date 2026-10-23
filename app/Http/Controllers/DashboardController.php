@@ -2,19 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Actions\Cash\CashRegister;
-use App\Actions\Cash\DebtLedger;
 use App\Actions\Documents\PendingDrafts;
+use App\Actions\Reports\BalanceSheet;
 use App\Actions\Reports\SalesReport;
 use App\Enums\CashOperationType;
-use App\Enums\DebtSide;
 use App\Enums\DocumentKind;
 use App\Enums\DocumentStatus;
-use App\Enums\LoanDirection;
 use App\Enums\StorePermission;
 use App\Models\CashOperation;
 use App\Models\Document;
-use App\Models\Loan;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -50,8 +46,7 @@ class DashboardController extends Controller
     {
         $today = today()->toDateString();
         $sales = app(SalesReport::class)->handle($user->team, $today, $today, true)['totals'];
-        $debts = app(DebtLedger::class);
-        $loans = Loan::query()->withRepaid()->get();
+        $balance = app(BalanceSheet::class)->handle($user->team);
 
         return [
             'pendingDrafts' => app(PendingDrafts::class)->widget($user),
@@ -61,13 +56,8 @@ class DashboardController extends Controller
                 'gross_profit' => $sales['gross_profit'],
                 'cash_received' => $this->cashReceivedToday(),
             ],
-            'cashBalances' => app(CashRegister::class)->balances($user->team),
-            'debts' => [
-                'customer' => $this->total($debts->balances($user->team_id, DebtSide::Customer)),
-                'supplier' => $this->total($debts->balances($user->team_id, DebtSide::Supplier)),
-                'loans_given' => $this->total($loans->where('direction', LoanDirection::Given)->map->balance()->all()),
-                'loans_received' => $this->total($loans->where('direction', LoanDirection::Received)->map->balance()->all()),
-            ],
+            'cashBalances' => $balance['cash'],
+            'debts' => $balance['debts'],
         ];
     }
 
@@ -119,16 +109,5 @@ class DashboardController extends Controller
             ->value('total');
 
         return number_format((float) $sum, 2, '.', '');
-    }
-
-    /**
-     * Add up amounts.
-     *
-     * @param  array<int|string, numeric-string>  $amounts
-     * @return numeric-string
-     */
-    private function total(array $amounts): string
-    {
-        return array_reduce($amounts, fn (string $sum, string $amount) => bcadd($sum, $amount, 2), '0.00');
     }
 }

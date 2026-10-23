@@ -63,3 +63,10 @@ export function formatDate(value: string | null): string {
 
     return `${day}.${month}.${year}`;
 }
+
+/** Payment method values as the Uzbek labels the cash register shows. */
+export const paymentMethodLabels: Record<string, string> = {
+    cash: 'Naqd',
+    card: 'Karta',
+    bank_transfer: "Bank o'tkazmasi",
+};

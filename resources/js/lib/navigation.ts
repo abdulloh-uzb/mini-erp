@@ -9,6 +9,9 @@ import {
     Handshake,
     Landmark,
     LayoutGrid,
+    PieChart,
+    Scale,
+    TrendingUp,
     Package,
     ScanBarcode,
     ShoppingCart,
@@ -32,7 +35,12 @@ import { index as products } from '@/routes/products';
 import { index as purchases } from '@/routes/purchases';
 import { create as sale } from '@/routes/sales';
 import { index as salesReturns } from '@/routes/sales-returns';
-import { sales as salesReport } from '@/routes/reports';
+import {
+    balance,
+    cashFlow,
+    profitAndLoss,
+    sales as salesReport,
+} from '@/routes/reports';
 import { index as stock } from '@/routes/stock';
 import { index as supplierDebts } from '@/routes/supplier-debts';
 import { index as supplierReturns } from '@/routes/supplier-returns';
@@ -169,6 +177,24 @@ const storeNavigation: NavGroup[] = [
                 href: salesReport(),
                 icon: BarChart3,
                 permission: 'sales-report.view',
+            },
+            {
+                title: 'Foyda va zarar',
+                href: profitAndLoss(),
+                icon: TrendingUp,
+                permission: 'finance-reports.view',
+            },
+            {
+                title: 'Pul oqimi',
+                href: cashFlow(),
+                icon: PieChart,
+                permission: 'finance-reports.view',
+            },
+            {
+                title: 'Balans',
+                href: balance(),
+                icon: Scale,
+                permission: 'finance-reports.view',
             },
         ],
     },

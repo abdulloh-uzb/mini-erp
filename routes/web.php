@@ -7,6 +7,7 @@ use App\Http\Controllers\CounterpartyController;
 use App\Http\Controllers\CustomerDebtController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\FinanceReportController;
 use App\Http\Controllers\InventoryCountController;
 use App\Http\Controllers\LoanController;
 use App\Http\Controllers\LocationController;
@@ -100,6 +101,12 @@ Route::middleware(['auth', 'store'])->group(function () {
 
     Route::get('reports/sales', SalesReportController::class)
         ->middleware('can:'.StorePermission::SalesReportView->value)->name('reports.sales');
+
+    Route::middleware('can:'.StorePermission::FinanceReportsView->value)->group(function () {
+        Route::get('reports/profit-and-loss', [FinanceReportController::class, 'profitAndLoss'])->name('reports.profit-and-loss');
+        Route::get('reports/cash-flow', [FinanceReportController::class, 'cashFlow'])->name('reports.cash-flow');
+        Route::get('reports/balance', [FinanceReportController::class, 'balance'])->name('reports.balance');
+    });
 
     Route::get('stock', StockReportController::class)
         ->middleware('can:'.StorePermission::StockReportView->value)->name('stock.index');

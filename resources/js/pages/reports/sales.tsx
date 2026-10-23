@@ -1,10 +1,6 @@
-import { Head, router } from '@inertiajs/react';
-import { useState } from 'react';
-import type { FormEvent } from 'react';
+import { Head } from '@inertiajs/react';
 import { EmptyState, ListPageHeader, ListTable } from '@/components/list-page';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import { ReportPeriodForm, ReportStat } from '@/components/report';
 import { formatDateTime, formatMoney, formatQuantity } from '@/lib/format';
 import { sales } from '@/routes/reports';
 
@@ -47,31 +43,9 @@ type Props = {
     filters: { from: string; to: string };
 };
 
-function Stat({ label, value }: { label: string; value: string }) {
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                    {label}
-                </CardTitle>
-            </CardHeader>
-            <CardContent className="text-2xl font-semibold tabular-nums">
-                {value}
-            </CardContent>
-        </Card>
-    );
-}
-
 export default function SalesReport({ report, filters }: Props) {
-    const [from, setFrom] = useState(filters.from);
-    const [to, setTo] = useState(filters.to);
     const { totals } = report;
     const showCosts = totals.gross_profit !== undefined;
-
-    function submit(event: FormEvent) {
-        event.preventDefault();
-        router.get(sales.url({ query: { from, to } }), {}, { replace: true });
-    }
 
     return (
         <>
@@ -82,44 +56,27 @@ export default function SalesReport({ report, filters }: Props) {
                     description="Bajarilgan sotuvlar, qaytarishlar chegirilgan holda."
                 />
 
-                <form
-                    onSubmit={submit}
-                    className="flex flex-wrap items-end gap-3"
-                >
-                    <label className="grid gap-1 text-sm">
-                        Dan
-                        <Input
-                            type="date"
-                            value={from}
-                            onChange={(event) => setFrom(event.target.value)}
-                            className="w-44"
-                        />
-                    </label>
-                    <label className="grid gap-1 text-sm">
-                        Gacha
-                        <Input
-                            type="date"
-                            value={to}
-                            onChange={(event) => setTo(event.target.value)}
-                            className="w-44"
-                        />
-                    </label>
-                    <Button type="submit">Ko'rsatish</Button>
-                </form>
+                <ReportPeriodForm
+                    filters={filters}
+                    url={(query) => sales.url({ query })}
+                />
 
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                    <Stat label="Tushum" value={formatMoney(totals.revenue)} />
-                    <Stat
+                    <ReportStat
+                        label="Tushum"
+                        value={formatMoney(totals.revenue)}
+                    />
+                    <ReportStat
                         label="Sotuvlar soni"
                         value={String(totals.sales_count)}
                     />
                     {showCosts && (
                         <>
-                            <Stat
+                            <ReportStat
                                 label="Tannarx"
                                 value={formatMoney(totals.cost)}
                             />
-                            <Stat
+                            <ReportStat
                                 label="Yalpi foyda"
                                 value={formatMoney(totals.gross_profit)}
                             />
