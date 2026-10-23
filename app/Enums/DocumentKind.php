@@ -53,6 +53,23 @@ enum DocumentKind: string
     }
 
     /**
+     * Get the route name prefix of the kind's pages ("purchases" for `purchases.show`), or null
+     * for the opening balance, which has a page of its own.
+     */
+    public function routePrefix(): ?string
+    {
+        return match ($this) {
+            self::Sale => 'sales',
+            self::SalesReturn => 'sales-returns',
+            self::Purchase => 'purchases',
+            self::SupplierReturn => 'supplier-returns',
+            self::Transfer => 'transfers',
+            self::InventoryCount => 'inventory-counts',
+            self::OpeningBalance => null,
+        };
+    }
+
+    /**
      * Get the permission needed to create, edit and delete drafts of this kind.
      */
     public function draftPermission(): StorePermission

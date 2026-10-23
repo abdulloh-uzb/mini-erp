@@ -11,6 +11,8 @@ declare module '@inertiajs/core' {
         sharedPageProps: {
             name: string;
             auth: Auth;
+            /** Drafts waiting per document kind, for users who execute those kinds. */
+            draftCounts: Record<string, number>;
             sidebarOpen: boolean;
             [key: string]: unknown;
         };

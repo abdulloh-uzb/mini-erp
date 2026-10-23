@@ -13,6 +13,8 @@ export type NavItem = {
     isActive?: boolean;
     /** The permission needed to see the item; shown to everyone when omitted. */
     permission?: string;
+    /** The document kind whose waiting-draft count shows as a badge. */
+    draftKind?: string;
 };
 
 export type NavGroup = {

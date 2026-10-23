@@ -14,6 +14,7 @@ use App\Http\Controllers\OpeningBalanceController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\SaleController;
+use App\Http\Controllers\SalesReportController;
 use App\Http\Controllers\SalesReturnController;
 use App\Http\Controllers\StockReportController;
 use App\Http\Controllers\SupplierDebtController;
@@ -96,6 +97,9 @@ Route::middleware(['auth', 'store'])->group(function () {
         Route::put('inventory-counts/{count}', [InventoryCountController::class, 'update'])->name('inventory-counts.update');
         Route::delete('inventory-counts/{count}', [InventoryCountController::class, 'destroy'])->name('inventory-counts.destroy');
     });
+
+    Route::get('reports/sales', SalesReportController::class)
+        ->middleware('can:'.StorePermission::SalesReportView->value)->name('reports.sales');
 
     Route::get('stock', StockReportController::class)
         ->middleware('can:'.StorePermission::StockReportView->value)->name('stock.index');

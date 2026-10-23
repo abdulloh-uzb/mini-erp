@@ -1,5 +1,6 @@
 import {
     ArrowLeftRight,
+    BarChart3,
     Boxes,
     ClipboardCheck,
     ClipboardList,
@@ -31,6 +32,7 @@ import { index as products } from '@/routes/products';
 import { index as purchases } from '@/routes/purchases';
 import { create as sale } from '@/routes/sales';
 import { index as salesReturns } from '@/routes/sales-returns';
+import { sales as salesReport } from '@/routes/reports';
 import { index as stock } from '@/routes/stock';
 import { index as supplierDebts } from '@/routes/supplier-debts';
 import { index as supplierReturns } from '@/routes/supplier-returns';
@@ -61,6 +63,7 @@ const storeNavigation: NavGroup[] = [
                 href: salesReturns(),
                 icon: Undo2,
                 permission: 'sales-return.draft',
+                draftKind: 'sales_return',
             },
         ],
     },
@@ -72,6 +75,7 @@ const storeNavigation: NavGroup[] = [
                 href: purchases(),
                 icon: ShoppingCart,
                 permission: 'purchase.draft',
+                draftKind: 'purchase',
             },
             {
                 title: 'Yetkazib beruvchiga qaytarishlar',
@@ -101,6 +105,7 @@ const storeNavigation: NavGroup[] = [
                 href: inventoryCounts(),
                 icon: ClipboardCheck,
                 permission: 'inventory-count.draft',
+                draftKind: 'inventory_count',
             },
             {
                 title: 'Mahsulotlar',
@@ -156,7 +161,17 @@ const storeNavigation: NavGroup[] = [
             },
         ],
     },
-    { title: 'Hisobotlar', items: [] },
+    {
+        title: 'Hisobotlar',
+        items: [
+            {
+                title: 'Sotuvlar hisoboti',
+                href: salesReport(),
+                icon: BarChart3,
+                permission: 'sales-report.view',
+            },
+        ],
+    },
     {
         title: 'Sozlamalar',
         items: [

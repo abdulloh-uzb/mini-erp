@@ -1,8 +1,9 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import {
     SidebarGroup,
     SidebarGroupLabel,
     SidebarMenu,
+    SidebarMenuBadge,
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
@@ -11,6 +12,7 @@ import type { NavGroup } from '@/types';
 
 export function NavMain({ groups }: { groups: NavGroup[] }) {
     const { isCurrentOrParentUrl } = useCurrentUrl();
+    const { draftCounts } = usePage().props;
 
     return (
         <>
@@ -35,6 +37,12 @@ export function NavMain({ groups }: { groups: NavGroup[] }) {
                                         <span>{item.title}</span>
                                     </Link>
                                 </SidebarMenuButton>
+                                {item.draftKind &&
+                                    (draftCounts[item.draftKind] ?? 0) > 0 && (
+                                        <SidebarMenuBadge>
+                                            {draftCounts[item.draftKind]}
+                                        </SidebarMenuBadge>
+                                    )}
                             </SidebarMenuItem>
                         ))}
                     </SidebarMenu>

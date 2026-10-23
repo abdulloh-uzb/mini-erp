@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Actions\Documents\PendingDrafts;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -47,6 +48,7 @@ class HandleInertiaRequests extends Middleware
                 'store' => fn () => $user?->team?->only(['id', 'name']),
                 'permissions' => fn () => $user?->storePermissions() ?? [],
             ],
+            'draftCounts' => fn () => $user?->team_id === null ? [] : app(PendingDrafts::class)->counts($user),
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }
