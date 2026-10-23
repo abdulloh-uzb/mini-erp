@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Concerns\Archivable;
 use App\Concerns\BelongsToStore;
 use Database\Factories\LocationFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
 /**
@@ -21,12 +24,13 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Location|null $parent
+ * @property-read Collection<int, Location> $children
  */
 #[Fillable(['team_id', 'parent_id', 'name', 'archived_at'])]
 class Location extends Model
 {
     /** @use HasFactory<LocationFactory> */
-    use BelongsToStore, HasFactory;
+    use Archivable, BelongsToStore, HasFactory;
 
     /**
      * The name of the warehouse every new store starts with.
@@ -41,6 +45,16 @@ class Location extends Model
     public function parent(): BelongsTo
     {
         return $this->belongsTo(Location::class, 'parent_id');
+    }
+
+    /**
+     * Get the sub-warehouses inside this warehouse.
+     *
+     * @return HasMany<Location, $this>
+     */
+    public function children(): HasMany
+    {
+        return $this->hasMany(Location::class, 'parent_id');
     }
 
     /**

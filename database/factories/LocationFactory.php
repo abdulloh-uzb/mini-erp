@@ -25,4 +25,25 @@ class LocationFactory extends Factory
             'archived_at' => null,
         ];
     }
+
+    /**
+     * Indicate that the location is a sub-warehouse inside the given warehouse.
+     */
+    public function inside(Location $warehouse): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'team_id' => $warehouse->team_id,
+            'parent_id' => $warehouse->id,
+        ]);
+    }
+
+    /**
+     * Indicate that the location has been archived.
+     */
+    public function archived(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'archived_at' => now(),
+        ]);
+    }
 }

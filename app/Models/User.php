@@ -42,6 +42,15 @@ class User extends Authenticatable implements PasskeyUser
     use HasFactory, HasRoles, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
 
     /**
+     * The model's default values for attributes, matching the table defaults.
+     *
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'is_active' => true,
+    ];
+
+    /**
      * Get the store the user works in; null for a super-admin.
      *
      * @return BelongsTo<Team, $this>

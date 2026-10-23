@@ -18,7 +18,7 @@ class Phone
             return null;
         }
 
-        $digits = preg_replace('/\D/', '', $phone);
+        $digits = self::digits($phone);
 
         if (strlen($digits) === 9) {
             $digits = '998'.$digits;
@@ -32,12 +32,46 @@ class Phone
     }
 
     /**
+     * Get only the digits of a typed phone number or search term.
+     */
+    public static function digits(string $value): string
+    {
+        return preg_replace('/\D/', '', $value);
+    }
+
+    /**
+     * Determine if an optional phone was left empty: nothing typed, or only the input mask's "+998".
+     */
+    public static function isBlank(?string $phone): bool
+    {
+        return in_array(self::digits($phone ?? ''), ['', '998'], true);
+    }
+
+    /**
      * Get the validation rules for a normalised phone number.
      *
      * @return array<int, string>
      */
     public static function rules(): array
     {
-        return ['required', 'string', 'regex:/^\+998\d{9}$/'];
+        return ['required', ...self::formatRules()];
+    }
+
+    /**
+     * Get the validation rules for an optional normalised phone number.
+     *
+     * @return array<int, string>
+     */
+    public static function optionalRules(): array
+    {
+        return ['nullable', ...self::formatRules()];
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private static function formatRules(): array
+    {
+        return ['string', 'regex:/^\+998\d{9}$/'];
     }
 }
