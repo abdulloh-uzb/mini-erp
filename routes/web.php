@@ -12,6 +12,7 @@ use App\Http\Controllers\LocationController;
 use App\Http\Controllers\OpeningBalanceController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\PurchaseController;
+use App\Http\Controllers\SaleController;
 use App\Http\Controllers\StockReportController;
 use App\Http\Controllers\SupplierDebtController;
 use App\Http\Controllers\TransferController;
@@ -38,6 +39,14 @@ Route::middleware(['auth', 'store'])->group(function () {
         Route::put('products/{product}', [ProductController::class, 'update'])->name('products.update');
         Route::post('products/{product}/archive', [ProductController::class, 'archive'])->name('products.archive');
         Route::post('products/{product}/unarchive', [ProductController::class, 'unarchive'])->name('products.unarchive');
+    });
+
+    Route::middleware('can:'.StorePermission::SaleDraft->value)->group(function () {
+        Route::get('sales/create', [SaleController::class, 'create'])->name('sales.create');
+        Route::post('sales', [SaleController::class, 'store'])->name('sales.store');
+        Route::get('sales/{sale}', [SaleController::class, 'show'])->name('sales.show');
+        Route::put('sales/{sale}', [SaleController::class, 'update'])->name('sales.update');
+        Route::delete('sales/{sale}', [SaleController::class, 'destroy'])->name('sales.destroy');
     });
 
     Route::middleware('can:'.StorePermission::PurchaseDraft->value)->group(function () {

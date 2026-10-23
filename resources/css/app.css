@@ -141,3 +141,22 @@
         @apply bg-background text-foreground;
     }
 }
+
+/* Printing a page with a receipt (the sale screen) prints only the receipt. */
+@media print {
+    body:has(.receipt-print) * {
+        visibility: hidden;
+    }
+
+    body:has(.receipt-print) .receipt-print,
+    body:has(.receipt-print) .receipt-print * {
+        visibility: visible;
+    }
+
+    body:has(.receipt-print) .receipt-print {
+        position: absolute;
+        top: 0;
+        left: 0;
+        color: black;
+    }
+}

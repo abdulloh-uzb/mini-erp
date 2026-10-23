@@ -49,6 +49,7 @@ class ExecuteDocument
 
             match ($locked->kind) {
                 DocumentKind::OpeningBalance => $this->executeOpeningBalance($locked, $user, $lines->all()),
+                DocumentKind::Sale => $this->executeSale($locked, $user, $lines->all()),
                 DocumentKind::Purchase => $this->executePurchase($locked, $user, $lines->all()),
                 DocumentKind::Transfer => $this->executeTransfer($locked, $lines->all()),
                 DocumentKind::InventoryCount => $this->executeInventoryCount($locked, $lines->all()),
@@ -151,12 +152,7 @@ class ExecuteDocument
         );
 
         $payments = $document->payments()->get();
-        $paid = array_reduce($payments->all(), fn (string $sum, DocumentPayment $payment) => bcadd($sum, $payment->amount, 2), '0.00');
-        $unpaid = bcsub($this->total($lines), $paid, 2);
-
-        if (bccomp($unpaid, '0', 2) < 0) {
-            throw ValidationException::withMessages(['payments' => __("To'lov summasi jamidan oshib ketdi.")]);
-        }
+        $unpaid = $this->unpaidPart($payments->all(), $lines);
 
         foreach ($lines as $line) {
             $this->stock->receive($line, (int) $document->location_id, $line->quantity, $line->price);
@@ -176,6 +172,52 @@ class ExecuteDocument
 
         if (bccomp($unpaid, '0', 2) > 0) {
             $this->debts->add($user, (int) $document->counterparty_id, DebtSide::Supplier, DebtEntryType::Purchase, $unpaid, $document->id);
+        }
+    }
+
+    /**
+     * Take the sold pieces out of the document's location, each line keeping the average cost
+     * at execution as its unit cost for P&L. Every line needs a price and the stock to cover
+     * it. The paid part enters the register per method and may not exceed the total; whatever
+     * stays unpaid becomes the customer's debt, so it needs a customer.
+     *
+     * @param  array<int, DocumentLine>  $lines
+     */
+    private function executeSale(Document $document, User $user, array $lines): void
+    {
+        $this->validateLines($lines, function (DocumentLine $line) use ($document) {
+            $errors = $line->price === null ? ['price' => __('Narxni kiriting.')] : [];
+
+            try {
+                $this->stock->issue($line, (int) $document->location_id, $line->quantity);
+                $line->update(['unit_cost' => $this->stock->averageCost($line)]);
+            } catch (InsufficientStock $exception) {
+                $errors['pieces'] = $this->shortStockMessage($exception, $line);
+            }
+
+            return $errors;
+        });
+
+        $payments = $document->payments()->get();
+        $unpaid = $this->unpaidPart($payments->all(), $lines);
+
+        if (bccomp($unpaid, '0', 2) > 0 && $document->counterparty_id === null) {
+            throw ValidationException::withMessages(['counterparty_id' => __('Qarzga sotish uchun mijozni tanlang.')]);
+        }
+
+        foreach ($payments as $payment) {
+            $this->register->record(
+                $user,
+                CashOperationType::SalePayment,
+                $payment->payment_method,
+                $payment->amount,
+                counterpartyId: $document->counterparty_id,
+                documentId: $document->id,
+            );
+        }
+
+        if (bccomp($unpaid, '0', 2) > 0) {
+            $this->debts->add($user, (int) $document->counterparty_id, DebtSide::Customer, DebtEntryType::Sale, $unpaid, $document->id);
         }
     }
 
@@ -247,6 +289,27 @@ class ExecuteDocument
             : __(':pieces dona', ['pieces' => $exception->available]);
 
         return __('Joyda yetarli emas. Qoldiq: :quantity.', ['quantity' => $available]);
+    }
+
+    /**
+     * Get what stays unpaid of the lines' total after the planned payments.
+     *
+     * @param  array<int, DocumentPayment>  $payments
+     * @param  array<int, DocumentLine>  $lines
+     * @return numeric-string
+     *
+     * @throws ValidationException when the payments exceed the total.
+     */
+    private function unpaidPart(array $payments, array $lines): string
+    {
+        $paid = array_reduce($payments, fn (string $sum, DocumentPayment $payment) => bcadd($sum, $payment->amount, 2), '0.00');
+        $unpaid = bcsub($this->total($lines), $paid, 2);
+
+        if (bccomp($unpaid, '0', 2) < 0) {
+            throw ValidationException::withMessages(['payments' => __("To'lov summasi jamidan oshib ketdi.")]);
+        }
+
+        return $unpaid;
     }
 
     /**

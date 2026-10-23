@@ -8,6 +8,7 @@ namespace App\Enums;
  */
 enum DebtEntryType: string
 {
+    case Sale = 'sale';
     case Purchase = 'purchase';
     case OpeningBalance = 'opening_balance';
     case Payment = 'payment';

@@ -8,6 +8,7 @@ import {
     Landmark,
     LayoutGrid,
     Package,
+    ScanBarcode,
     ShoppingCart,
     Store,
     Users,
@@ -25,6 +26,7 @@ import { index as locations } from '@/routes/locations';
 import { show as openingBalance } from '@/routes/opening-balance';
 import { index as products } from '@/routes/products';
 import { index as purchases } from '@/routes/purchases';
+import { create as sale } from '@/routes/sales';
 import { index as stock } from '@/routes/stock';
 import { index as supplierDebts } from '@/routes/supplier-debts';
 import { index as transfers } from '@/routes/transfers';
@@ -40,7 +42,17 @@ const storeNavigation: NavGroup[] = [
         title: null,
         items: [{ title: 'Bosh sahifa', href: dashboard(), icon: LayoutGrid }],
     },
-    { title: 'Savdo', items: [] },
+    {
+        title: 'Savdo',
+        items: [
+            {
+                title: 'Sotuv',
+                href: sale(),
+                icon: ScanBarcode,
+                permission: 'sale.draft',
+            },
+        ],
+    },
     {
         title: 'Xarid',
         items: [
