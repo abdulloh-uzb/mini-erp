@@ -1,4 +1,6 @@
 import {
+    Boxes,
+    ClipboardList,
     Contact,
     LayoutGrid,
     Package,
@@ -11,7 +13,9 @@ import { index as adminStores } from '@/routes/admin/stores';
 import { index as counterparties } from '@/routes/counterparties';
 import { index as employees } from '@/routes/employees';
 import { index as locations } from '@/routes/locations';
+import { show as openingBalance } from '@/routes/opening-balance';
 import { index as products } from '@/routes/products';
+import { index as stock } from '@/routes/stock';
 import type { NavGroup, StoreRole } from '@/types';
 
 /**
@@ -29,6 +33,12 @@ const storeNavigation: NavGroup[] = [
     {
         title: 'Ombor',
         items: [
+            {
+                title: 'Qoldiqlar',
+                href: stock(),
+                icon: Boxes,
+                permission: 'stock-report.view',
+            },
             {
                 title: 'Mahsulotlar',
                 href: products(),
@@ -64,6 +74,12 @@ const storeNavigation: NavGroup[] = [
                 href: employees(),
                 icon: Users,
                 permission: 'employees.manage',
+            },
+            {
+                title: "Boshlang'ich qoldiq",
+                href: openingBalance(),
+                icon: ClipboardList,
+                permission: 'opening-balance.manage',
             },
         ],
     },

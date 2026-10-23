@@ -2,13 +2,24 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\StorePermission;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function __invoke(): Response
+    /**
+     * Show the home page. The owner sees the "Boshlang'ich qoldiqni kiriting" card until the
+     * opening balance is executed or skipped.
+     */
+    public function __invoke(Request $request): Response
     {
-        return Inertia::render('dashboard');
+        $user = $request->user();
+
+        return Inertia::render('dashboard', [
+            'openingBalancePending' => $user->can(StorePermission::OpeningBalanceManage->value)
+                && ! $user->team->hasSettledOpeningBalance(),
+        ]);
     }
 }

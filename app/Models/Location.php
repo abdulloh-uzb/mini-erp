@@ -6,6 +6,7 @@ use App\Concerns\Archivable;
 use App\Concerns\BelongsToStore;
 use Database\Factories\LocationFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -55,6 +56,31 @@ class Location extends Model
     public function children(): HasMany
     {
         return $this->hasMany(Location::class, 'parent_id');
+    }
+
+    /**
+     * Get the name shown in pickers and documents: "Warehouse / Sub-warehouse" for a
+     * sub-warehouse. Load `parent` first.
+     */
+    public function fullName(): string
+    {
+        return $this->parent === null ? $this->name : $this->parent->name.' / '.$this->name;
+    }
+
+    /**
+     * Get the given locations as picker options sorted by full name.
+     *
+     * @param  Builder<Location>  $query
+     * @return array<int, array{id: int, name: string}>
+     */
+    public static function pickerOptions(Builder $query): array
+    {
+        return $query->with('parent')
+            ->get()
+            ->map(fn (Location $location) => ['id' => $location->id, 'name' => $location->fullName()])
+            ->sortBy('name')
+            ->values()
+            ->all();
     }
 
     /**

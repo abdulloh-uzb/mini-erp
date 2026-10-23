@@ -1,8 +1,13 @@
 import { Head, usePage } from '@inertiajs/react';
 import Heading from '@/components/heading';
+import OpeningBalanceCard from '@/components/opening-balance-card';
 import { dashboard } from '@/routes';
 
-export default function Dashboard() {
+type Props = {
+    openingBalancePending: boolean;
+};
+
+export default function Dashboard({ openingBalancePending }: Props) {
     const { auth } = usePage().props;
 
     return (
@@ -13,6 +18,7 @@ export default function Dashboard() {
                     title={`Xush kelibsiz, ${auth.user.name}`}
                     description={auth.store?.name}
                 />
+                {openingBalancePending && <OpeningBalanceCard />}
             </div>
         </>
     );
