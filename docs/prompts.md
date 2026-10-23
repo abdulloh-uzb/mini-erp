@@ -1515,3 +1515,27 @@ for such a small task , you dont need running tests. just check if it is set it 
     - The opening-balance skip deletes a saved draft.
 </agent-message>
 ```
+
+### 102. 2026-10-24 04:04
+
+```text
+                                                                                                                                                                                                                                                                                                                                                                                                                                                             we have chatgpt prompt list. i use chatgpt to analyze what tasks and what question claude is asking from me. pls check   @chatgpt-prompts.md
+```
+
+### 103. 2026-10-24 04:05
+
+```text
+just add it . currently these prompts unordered. just add prompts, dont change it at all. copy as it is.
+```
+
+### 104. 2026-10-24 04:05
+
+```text
+did you set docker and docker compose files?
+```
+
+### 105. 2026-10-24 04:06
+
+```text
+yes, we need docker in order other people use this in github and run easily
+```
