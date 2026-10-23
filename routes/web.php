@@ -6,6 +6,7 @@ use App\Http\Controllers\CashOperationController;
 use App\Http\Controllers\CounterpartyController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\InventoryCountController;
 use App\Http\Controllers\LoanController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\OpeningBalanceController;
@@ -13,6 +14,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\StockReportController;
 use App\Http\Controllers\SupplierDebtController;
+use App\Http\Controllers\TransferController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
@@ -45,6 +47,24 @@ Route::middleware(['auth', 'store'])->group(function () {
         Route::get('purchases/{purchase}', [PurchaseController::class, 'show'])->name('purchases.show');
         Route::put('purchases/{purchase}', [PurchaseController::class, 'update'])->name('purchases.update');
         Route::delete('purchases/{purchase}', [PurchaseController::class, 'destroy'])->name('purchases.destroy');
+    });
+
+    Route::middleware('can:'.StorePermission::TransferDraft->value)->group(function () {
+        Route::get('transfers', [TransferController::class, 'index'])->name('transfers.index');
+        Route::get('transfers/create', [TransferController::class, 'create'])->name('transfers.create');
+        Route::post('transfers', [TransferController::class, 'store'])->name('transfers.store');
+        Route::get('transfers/{transfer}', [TransferController::class, 'show'])->name('transfers.show');
+        Route::put('transfers/{transfer}', [TransferController::class, 'update'])->name('transfers.update');
+        Route::delete('transfers/{transfer}', [TransferController::class, 'destroy'])->name('transfers.destroy');
+    });
+
+    Route::middleware('can:'.StorePermission::InventoryCountDraft->value)->group(function () {
+        Route::get('inventory-counts', [InventoryCountController::class, 'index'])->name('inventory-counts.index');
+        Route::get('inventory-counts/create', [InventoryCountController::class, 'create'])->name('inventory-counts.create');
+        Route::post('inventory-counts', [InventoryCountController::class, 'store'])->name('inventory-counts.store');
+        Route::get('inventory-counts/{count}', [InventoryCountController::class, 'show'])->name('inventory-counts.show');
+        Route::put('inventory-counts/{count}', [InventoryCountController::class, 'update'])->name('inventory-counts.update');
+        Route::delete('inventory-counts/{count}', [InventoryCountController::class, 'destroy'])->name('inventory-counts.destroy');
     });
 
     Route::get('stock', StockReportController::class)

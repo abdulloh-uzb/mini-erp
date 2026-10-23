@@ -169,8 +169,9 @@ export function ProductSearch({
 }
 
 /**
- * The editable lines table. Columns: optional Joy, Mahsulot, Blok, Dona, Jami dona, optional
- * price and Summa. Errors are keyed like the server's (`lines.N.field`).
+ * The editable lines table. Columns: optional Joy, Mahsulot (with an optional hint such as the
+ * stock on hand), Blok, Dona, Jami dona, optional price and Summa. Errors are keyed like the
+ * server's (`lines.N.field`).
  */
 export function DocumentLinesTable({
     lines,
@@ -178,6 +179,7 @@ export function DocumentLinesTable({
     locations,
     priceLabel = 'Narx/dona',
     showPrice = true,
+    lineHint,
     errors,
     onChange,
     onRemove,
@@ -187,6 +189,7 @@ export function DocumentLinesTable({
     locations?: PickerOption[];
     priceLabel?: string;
     showPrice?: boolean;
+    lineHint?: (line: DraftLine) => ReactNode;
     errors: LineErrors;
     onChange: (index: number, line: DraftLine) => void;
     onRemove: (index: number) => void;
@@ -263,6 +266,11 @@ export function DocumentLinesTable({
                                     <div className="text-xs text-muted-foreground">
                                         1 blok = {piecesPerBlock} dona
                                     </div>
+                                    {lineHint && (
+                                        <div className="text-xs text-muted-foreground">
+                                            {lineHint(line)}
+                                        </div>
+                                    )}
                                     <InputError message={error('product_id')} />
                                 </td>
                                 <td className="px-3 py-2">
@@ -337,7 +345,7 @@ export function DocumentLinesTable({
     );
 }
 
-function QuantityInput({
+export function QuantityInput({
     label,
     value,
     onChange,

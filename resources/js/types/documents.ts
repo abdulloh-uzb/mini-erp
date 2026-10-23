@@ -10,6 +10,12 @@ export type DocumentLineData = {
     pieces_per_block: number;
     /** Absent where prices are costs (purchases) and the user may not view costs. */
     price?: string | null;
+    /** Inventory count: pieces on hand at execution; only for users who may execute counts. */
+    expected_quantity?: number | null;
+    /** Inventory count: average cost at execution; also needs costs.view. */
+    unit_cost?: string | null;
+    /** Inventory count: difference valued at average cost (negative: shortage); also needs costs.view. */
+    difference_value?: string | null;
 };
 
 /** A document as the shared document form receives it (DocumentResource). */
@@ -20,6 +26,9 @@ export type DocumentData = {
     status: DocumentStatus;
     location_id: number | null;
     location_name?: string | null;
+    /** Transfer: the location goods move to. */
+    destination_location_id: number | null;
+    destination_location_name?: string | null;
     counterparty_id: number | null;
     counterparty_name?: string | null;
     note: string | null;

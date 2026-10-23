@@ -6,9 +6,9 @@ use App\Actions\Cash\DebtLedger;
 use App\Actions\Documents\ExecuteDocument;
 use App\Actions\Documents\PreviousPrices;
 use App\Actions\Documents\SaveDraft;
+use App\Concerns\ReadsDocumentListFilters;
 use App\Enums\DebtSide;
 use App\Enums\DocumentKind;
-use App\Enums\DocumentStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\StorePermission;
 use App\Http\Requests\SavePurchaseRequest;
@@ -32,6 +32,8 @@ use Inertia\Response;
  */
 class PurchaseController extends Controller
 {
+    use ReadsDocumentListFilters;
+
     /**
      * Show the filtered purchase list, newest first.
      */
@@ -39,15 +41,7 @@ class PurchaseController extends Controller
     {
         $user = $request->user();
         $canViewCosts = $user->can(StorePermission::CostsView->value);
-        $filters = [
-            'status' => $request->enum('status', DocumentStatus::class),
-            'from' => $request->date('from')?->toDateString(),
-            'to' => $request->date('to')?->toDateString(),
-            'location_id' => $request->filled('location_id') ? $request->integer('location_id') : null,
-            'counterparty_id' => $request->filled('counterparty_id') ? $request->integer('counterparty_id') : null,
-            'author_id' => $request->filled('author_id') ? $request->integer('author_id') : null,
-            'search' => $request->string('search')->trim()->value(),
-        ];
+        $filters = $this->documentListFilters($request);
 
         $purchases = Document::query()
             ->ofKind(DocumentKind::Purchase)

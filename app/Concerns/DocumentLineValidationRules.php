@@ -9,7 +9,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 /**
- * The shared document-form lines: a product, blocks + pieces, an optional price per piece and,
+ * The shared document-form lines: a product, blocks + pieces, optionally a price per piece and,
  * where it varies per line, a location. Products and locations must be active and in the store.
  *
  * @mixin FormRequest
@@ -21,7 +21,7 @@ trait DocumentLineValidationRules
      *
      * @return array<string, array<mixed>>
      */
-    protected function documentLineRules(bool $withLocation = false): array
+    protected function documentLineRules(bool $withLocation = false, bool $withPrice = true): array
     {
         $storeId = $this->user()->team_id;
 
@@ -39,7 +39,7 @@ trait DocumentLineValidationRules
             ]] : []),
             'lines.*.blocks' => ['nullable', 'integer', 'min:0', 'max:100000'],
             'lines.*.pieces' => ['nullable', 'integer', 'min:0', 'max:1000000'],
-            'lines.*.price' => ['nullable', 'numeric', 'decimal:0,2', 'min:0', 'max:9999999999999999'],
+            ...($withPrice ? ['lines.*.price' => ['nullable', 'numeric', 'decimal:0,2', 'min:0', 'max:9999999999999999']] : []),
         ];
     }
 

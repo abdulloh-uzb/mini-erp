@@ -1,5 +1,7 @@
 import {
+    ArrowLeftRight,
     Boxes,
+    ClipboardCheck,
     ClipboardList,
     Contact,
     HandCoins,
@@ -17,6 +19,7 @@ import { index as adminStores } from '@/routes/admin/stores';
 import { index as cash } from '@/routes/cash';
 import { index as counterparties } from '@/routes/counterparties';
 import { index as employees } from '@/routes/employees';
+import { index as inventoryCounts } from '@/routes/inventory-counts';
 import { index as loans } from '@/routes/loans';
 import { index as locations } from '@/routes/locations';
 import { show as openingBalance } from '@/routes/opening-balance';
@@ -24,6 +27,7 @@ import { index as products } from '@/routes/products';
 import { index as purchases } from '@/routes/purchases';
 import { index as stock } from '@/routes/stock';
 import { index as supplierDebts } from '@/routes/supplier-debts';
+import { index as transfers } from '@/routes/transfers';
 import type { NavGroup, StoreRole } from '@/types';
 
 /**
@@ -56,6 +60,18 @@ const storeNavigation: NavGroup[] = [
                 href: stock(),
                 icon: Boxes,
                 permission: 'stock-report.view',
+            },
+            {
+                title: "Ko'chirishlar",
+                href: transfers(),
+                icon: ArrowLeftRight,
+                permission: 'transfer.draft',
+            },
+            {
+                title: 'Inventarizatsiyalar',
+                href: inventoryCounts(),
+                icon: ClipboardCheck,
+                permission: 'inventory-count.draft',
             },
             {
                 title: 'Mahsulotlar',

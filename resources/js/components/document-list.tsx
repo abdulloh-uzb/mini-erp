@@ -81,7 +81,7 @@ export function DocumentListFilters({
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <ListSearch
                     value={filters.search}
-                    placeholder="№ yoki kontragent"
+                    placeholder={counterparties ? '№ yoki kontragent' : '№'}
                 />
                 <ListTabs
                     tabs={[
@@ -191,15 +191,18 @@ export function FilterSelect({
 
 /**
  * Columns: №, Sana (executed-at, or created-at for drafts), Joy, Kontragent, Summa, Holat,
- * Muallif. A row click opens the document.
+ * Muallif. Kinds without a counterparty or a sum hide those columns. A row click opens the
+ * document.
  */
 export function DocumentListTable({
     rows,
     onOpen,
+    showCounterparty = true,
     showTotal = true,
 }: {
     rows: DocumentListRow[];
     onOpen: (row: DocumentListRow) => void;
+    showCounterparty?: boolean;
     showTotal?: boolean;
 }) {
     return (
@@ -208,7 +211,7 @@ export function DocumentListTable({
                 '№',
                 'Sana',
                 'Joy',
-                'Kontragent',
+                ...(showCounterparty ? ['Kontragent'] : []),
                 ...(showTotal ? ['Summa'] : []),
                 'Holat',
                 'Muallif',
@@ -227,7 +230,9 @@ export function DocumentListTable({
                         {formatDateTime(row.date)}
                     </td>
                     <td className="px-4 py-3">{row.location ?? '—'}</td>
-                    <td className="px-4 py-3">{row.counterparty ?? '—'}</td>
+                    {showCounterparty && (
+                        <td className="px-4 py-3">{row.counterparty ?? '—'}</td>
+                    )}
                     {showTotal && (
                         <td className="px-4 py-3 tabular-nums">
                             {row.total === null ? '—' : formatMoney(row.total)}

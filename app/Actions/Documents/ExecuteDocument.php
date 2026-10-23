@@ -50,6 +50,8 @@ class ExecuteDocument
             match ($locked->kind) {
                 DocumentKind::OpeningBalance => $this->executeOpeningBalance($locked, $user, $lines->all()),
                 DocumentKind::Purchase => $this->executePurchase($locked, $user, $lines->all()),
+                DocumentKind::Transfer => $this->executeTransfer($locked, $lines->all()),
+                DocumentKind::InventoryCount => $this->executeInventoryCount($locked, $lines->all()),
                 default => throw new LogicException("Documents of kind [{$locked->kind->value}] cannot be executed yet."),
             };
 
@@ -175,6 +177,76 @@ class ExecuteDocument
         if (bccomp($unpaid, '0', 2) > 0) {
             $this->debts->add($user, (int) $document->counterparty_id, DebtSide::Supplier, DebtEntryType::Purchase, $unpaid, $document->id);
         }
+    }
+
+    /**
+     * Move each line's pieces from the document's location to its destination. No money moves
+     * and the average cost is unchanged. A line the source cannot cover names what is there.
+     *
+     * @param  array<int, DocumentLine>  $lines
+     */
+    private function executeTransfer(Document $document, array $lines): void
+    {
+        if ($document->location_id === $document->destination_location_id) {
+            throw ValidationException::withMessages(['destination_location_id' => __('Bir xil joy tanlangan')]);
+        }
+
+        $this->validateLines($lines, function (DocumentLine $line) use ($document) {
+            try {
+                $this->stock->issue($line, (int) $document->location_id, $line->quantity);
+            } catch (InsufficientStock $exception) {
+                return ['pieces' => $this->shortStockMessage($exception, $line)];
+            }
+
+            $this->stock->receive($line, (int) $document->destination_location_id, $line->quantity);
+
+            return [];
+        });
+    }
+
+    /**
+     * Set each listed product at the document's location to the counted pieces; unlisted
+     * products keep their stock. Expected is what the location holds now, not when counting
+     * began, so stock moved meanwhile is no difference. Each line keeps expected, the average
+     * cost and the difference valued at it (shortage negative, surplus positive) for P&L.
+     *
+     * @param  array<int, DocumentLine>  $lines
+     */
+    private function executeInventoryCount(Document $document, array $lines): void
+    {
+        foreach ($lines as $line) {
+            $expected = $this->stock->recount($line, (int) $document->location_id, $line->quantity);
+            $averageCost = $this->stock->averageCost($line);
+
+            $line->update([
+                'expected_quantity' => $expected,
+                'unit_cost' => $averageCost,
+                'difference_value' => $this->roundMoney(bcmul((string) ($line->quantity - $expected), $averageCost, 6)),
+            ]);
+        }
+    }
+
+    /**
+     * Round an amount half away from zero to whole tiyin.
+     *
+     * @param  numeric-string  $amount
+     * @return numeric-string
+     */
+    private function roundMoney(string $amount): string
+    {
+        return bcadd($amount, bccomp($amount, '0', 6) < 0 ? '-0.005' : '0.005', 2);
+    }
+
+    /**
+     * Get the line error for a location short of pieces, naming what it holds as blocks + pieces.
+     */
+    private function shortStockMessage(InsufficientStock $exception, DocumentLine $line): string
+    {
+        $available = $line->pieces_per_block > 1
+            ? __(':blocks blok + :pieces dona', ['blocks' => intdiv($exception->available, $line->pieces_per_block), 'pieces' => $exception->available % $line->pieces_per_block])
+            : __(':pieces dona', ['pieces' => $exception->available]);
+
+        return __('Joyda yetarli emas. Qoldiq: :quantity.', ['quantity' => $available]);
     }
 
     /**

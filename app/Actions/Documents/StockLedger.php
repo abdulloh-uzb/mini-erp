@@ -82,6 +82,38 @@ class StockLedger
     }
 
     /**
+     * Set the pieces of the line's product at a location to what was counted, moving only the
+     * difference: a surplus enters at the current average (unchanged), a shortage leaves it.
+     *
+     * @return int the pieces on hand before the count (expected)
+     */
+    public function recount(DocumentLine $line, int $locationId, int $counted): int
+    {
+        $this->lockedCost($line->document->team_id, $line->product_id);
+        $balance = $this->lockedBalance($line, $locationId);
+        $expected = $balance->quantity;
+
+        if ($counted !== $expected) {
+            $balance->quantity = $counted;
+            $balance->save();
+
+            $this->recordMovement($line, $locationId, $counted - $expected);
+        }
+
+        return $expected;
+    }
+
+    /**
+     * Get the current average cost of the line's product.
+     *
+     * @return numeric-string
+     */
+    public function averageCost(DocumentLine $line): string
+    {
+        return $this->lockedCost($line->document->team_id, $line->product_id)->average_cost;
+    }
+
+    /**
      * Get the cost row of a product, locked for this transaction.
      */
     private function lockedCost(int $storeId, int $productId): ProductCost
