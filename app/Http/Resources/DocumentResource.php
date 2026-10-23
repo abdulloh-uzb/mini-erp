@@ -12,6 +12,7 @@ use App\Models\OpeningDebt;
 use App\Models\OpeningLoan;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Http\Resources\MissingValue;
 
 /**
  * A document as the shared document form shows it: header, audit (created by / executed by)
@@ -78,12 +79,23 @@ class DocumentResource extends JsonResource
                 'due_date' => $loan->due_date?->toDateString(),
                 'note' => $loan->note,
             ])->all()),
-            'supplier_debts' => $this->whenLoaded('openingDebts', fn () => $this->openingDebts->where('side', DebtSide::Supplier)->map(fn (OpeningDebt $debt) => [
-                'id' => $debt->id,
-                'counterparty_id' => $debt->counterparty_id,
-                'counterparty_name' => $debt->counterparty->name,
-                'amount' => $debt->amount,
-            ])->values()->all()),
+            'customer_debts' => $this->openingDebtRows(DebtSide::Customer),
+            'supplier_debts' => $this->openingDebtRows(DebtSide::Supplier),
         ];
+    }
+
+    /**
+     * Get the opening balance's debts on one side, once the debts are loaded.
+     *
+     * @return MissingValue|array<int, array{id: int, counterparty_id: int, counterparty_name: string, amount: numeric-string}>
+     */
+    private function openingDebtRows(DebtSide $side): MissingValue|array
+    {
+        return $this->whenLoaded('openingDebts', fn () => $this->openingDebts->where('side', $side)->map(fn (OpeningDebt $debt) => [
+            'id' => $debt->id,
+            'counterparty_id' => $debt->counterparty_id,
+            'counterparty_name' => $debt->counterparty->name,
+            'amount' => $debt->amount,
+        ])->values()->all());
     }
 }

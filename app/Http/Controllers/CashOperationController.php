@@ -80,6 +80,7 @@ class CashOperationController extends Controller
                 'expense' => $this->categoryOptions($categories, CategoryDirection::Expense),
                 'income' => $this->categoryOptions($categories, CategoryDirection::Income),
             ],
+            ...($user->can(StorePermission::CustomerDebtPaymentCreate->value) ? ['customers' => $debts->debtors($user->team_id, DebtSide::Customer)] : []),
             ...($user->can(StorePermission::SupplierDebtsManage->value) ? ['suppliers' => $debts->debtors($user->team_id, DebtSide::Supplier)] : []),
         ]);
     }

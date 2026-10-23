@@ -21,9 +21,9 @@ use Inertia\Testing\AssertableInertia as Assert;
 /**
  * @return array{note: string|null, lines: array<int, array<string, mixed>>, payments: array<string, string|null>, loans: array<int, array<string, mixed>>, supplier_debts: array<int, array<string, mixed>>}
  */
-function openingBalanceInput(array $lines, ?string $note = null, array $payments = [], array $loans = [], array $supplierDebts = []): array
+function openingBalanceInput(array $lines, ?string $note = null, array $payments = [], array $loans = [], array $supplierDebts = [], array $customerDebts = []): array
 {
-    return ['note' => $note, 'lines' => $lines, 'payments' => $payments, 'loans' => $loans, 'supplier_debts' => $supplierDebts];
+    return ['note' => $note, 'lines' => $lines, 'payments' => $payments, 'loans' => $loans, 'supplier_debts' => $supplierDebts, 'customer_debts' => $customerDebts];
 }
 
 describe('show', function () {
@@ -209,6 +209,56 @@ describe('supplier debts', function () {
 
         expect(app(DebtLedger::class)->balance($supplier, DebtSide::Supplier))->toBe('750000.50')
             ->and(DebtEntry::query()->sole()->type)->toBe(DebtEntryType::OpeningBalance)
+            ->and(CashOperation::query()->count())->toBe(0);
+    });
+});
+
+describe('customer debts', function () {
+    test('the owner saves what each customer already owed with the draft', function () {
+        $owner = User::factory()->create();
+        $customer = Counterparty::factory()->for($owner->team)->create(['name' => 'Do\'kon Baraka']);
+
+        $this->actingAs($owner)->put(route('opening-balance.update'), openingBalanceInput(
+            [],
+            customerDebts: [['counterparty_id' => $customer->id, 'amount' => '480000']],
+        ))->assertSessionHasNoErrors();
+
+        $this->get(route('opening-balance.show'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('document.customer_debts', 1)
+                ->where('document.customer_debts.0.counterparty_name', 'Do\'kon Baraka')
+                ->where('document.customer_debts.0.amount', '480000.00')
+                ->has('document.supplier_debts', 0),
+            );
+    });
+
+    test('an opening customer debt needs a counterparty of the store, once, and an amount above zero', function () {
+        $owner = User::factory()->create();
+        $foreign = Counterparty::factory()->create();
+        $customer = Counterparty::factory()->for($owner->team)->create();
+
+        $this->actingAs($owner)->put(route('opening-balance.update'), openingBalanceInput(
+            [],
+            customerDebts: [
+                ['counterparty_id' => $foreign->id, 'amount' => '0'],
+                ['counterparty_id' => $customer->id, 'amount' => '10'],
+                ['counterparty_id' => $customer->id, 'amount' => '20'],
+            ],
+        ))->assertSessionHasErrors(['customer_debts.0.counterparty_id', 'customer_debts.0.amount', 'customer_debts.2.counterparty_id']);
+    });
+
+    test('executing turns opening customer debts into customer debt without moving money, beside the supplier side', function () {
+        $owner = User::factory()->create();
+        $counterparty = Counterparty::factory()->for($owner->team)->create();
+
+        $this->actingAs($owner)->post(route('opening-balance.execute'), openingBalanceInput(
+            [],
+            supplierDebts: [['counterparty_id' => $counterparty->id, 'amount' => '100000']],
+            customerDebts: [['counterparty_id' => $counterparty->id, 'amount' => '480000.25']],
+        ))->assertSessionHasNoErrors();
+
+        expect(app(DebtLedger::class)->balance($counterparty, DebtSide::Customer))->toBe('480000.25')
+            ->and(app(DebtLedger::class)->balance($counterparty, DebtSide::Supplier))->toBe('100000.00')
             ->and(CashOperation::query()->count())->toBe(0);
     });
 });

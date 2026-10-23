@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import CashOperationController from '@/actions/App/Http/Controllers/CashOperationController';
+import CustomerDebtController from '@/actions/App/Http/Controllers/CustomerDebtController';
 import SupplierDebtController from '@/actions/App/Http/Controllers/SupplierDebtController';
 import {
     CashOperationDialog,
@@ -31,6 +32,7 @@ import { usePermissions } from '@/hooks/use-permissions';
 import { formatDateTime, formatMoney } from '@/lib/format';
 import { index } from '@/routes/cash';
 import type { EnumOption, Paginated, PickerOption } from '@/types';
+import type { RouteFormDefinition } from '@/wayfinder';
 
 /** Balance per payment method value, plus `total`. */
 type Balances = Record<string, string> & { total: string };
@@ -56,11 +58,19 @@ type Category = {
     requires_note: boolean;
 };
 
-/** A supplier the store owes, offered for "Yetkazib beruvchiga to'lov" (owner only). */
-type OwedSupplier = {
+/** A customer or supplier with a debt, offered for a debt payment. */
+type Debtor = {
     id: number;
     name: string;
     balance: string;
+};
+
+/** How a dialog offers paying debts: the extra option, the party picker and the form behind it. */
+type DebtPayment = {
+    optionLabel: string;
+    partyLabel: string;
+    debtors: Debtor[];
+    form: RouteFormDefinition<'post'>;
 };
 
 type Filters = {
@@ -83,7 +93,8 @@ type Props = {
     authors: PickerOption[];
     counterparties: PickerOption[];
     categories: { expense: Category[]; income: Category[] };
-    suppliers?: OwedSupplier[];
+    customers?: Debtor[];
+    suppliers?: Debtor[];
 };
 
 export default function CashIndex({
@@ -95,6 +106,7 @@ export default function CashIndex({
     authors,
     counterparties,
     categories,
+    customers,
     suppliers,
 }: Props) {
     const { can } = usePermissions();
@@ -104,12 +116,22 @@ export default function CashIndex({
 
     const actions = canRecord && (
         <div className="flex gap-2">
-            {categories.income.length > 0 && (
+            {(categories.income.length > 0 || customers?.length) && (
                 <CategoryOperationDialog
                     title="Kirim"
                     categoryLabel="Kirim turi"
-                    description="Kassaga tushgan pul."
+                    description="Kassaga tushgan pul: daromad yoki mijozning qarz to'lovi."
                     categories={categories.income}
+                    debtPayment={
+                        customers?.length
+                            ? {
+                                  optionLabel: "Mijoz qarzi to'lovi",
+                                  partyLabel: 'Mijoz',
+                                  debtors: customers,
+                                  form: CustomerDebtController.pay.form(),
+                              }
+                            : undefined
+                    }
                     methods={methods}
                     trigger={
                         <Button variant="outline">
@@ -124,7 +146,16 @@ export default function CashIndex({
                 categoryLabel="Xarajat turi"
                 description="Kassadan chiqqan pul: xarajat, egasi olgan pul yoki yetkazib beruvchiga to'lov."
                 categories={categories.expense}
-                suppliers={suppliers}
+                debtPayment={
+                    suppliers?.length
+                        ? {
+                              optionLabel: "Yetkazib beruvchiga to'lov",
+                              partyLabel: 'Yetkazib beruvchi',
+                              debtors: suppliers,
+                              form: SupplierDebtController.pay.form(),
+                          }
+                        : undefined
+                }
                 methods={methods}
                 trigger={
                     <Button>
@@ -363,16 +394,16 @@ function CashFilters({
 }
 
 /**
- * + Kirim / + Chiqim: a category from the user's allowed list, amount, method, note. When
- * suppliers are given, Chiqim also offers "Yetkazib beruvchiga to'lov", which pays a supplier
- * through the supplier-debt form instead.
+ * + Kirim / + Chiqim: a category from the user's allowed list, amount, method, note. With a
+ * `debtPayment` the dialog also offers paying a debt (a customer under Kirim, a supplier under
+ * Chiqim), which goes through that debt's own form instead.
  */
 function CategoryOperationDialog({
     title,
     categoryLabel,
     description,
     categories,
-    suppliers = [],
+    debtPayment,
     methods,
     trigger,
 }: {
@@ -380,17 +411,19 @@ function CategoryOperationDialog({
     categoryLabel: string;
     description: string;
     categories: Category[];
-    suppliers?: OwedSupplier[];
+    debtPayment?: DebtPayment;
     methods: EnumOption[];
     trigger: ReactNode;
 }) {
-    const [choice, setChoice] = useState<number | 'supplier' | null>(
-        categories[0]?.id ?? null,
+    const [choice, setChoice] = useState<number | 'debt' | null>(
+        categories[0]?.id ?? (debtPayment ? 'debt' : null),
     );
-    const [supplierId, setSupplierId] = useState(suppliers[0]?.id ?? null);
-    const paysSupplier = choice === 'supplier';
+    const [debtorId, setDebtorId] = useState(
+        debtPayment?.debtors[0]?.id ?? null,
+    );
+    const paysDebt = debtPayment !== undefined && choice === 'debt';
     const category = categories.find((item) => item.id === choice);
-    const supplier = suppliers.find((item) => item.id === supplierId);
+    const debtor = debtPayment?.debtors.find((item) => item.id === debtorId);
     const id = `cash-${title.toLowerCase()}-category`;
 
     return (
@@ -399,12 +432,13 @@ function CategoryOperationDialog({
             description={description}
             trigger={trigger}
             form={
-                paysSupplier
-                    ? SupplierDebtController.pay.form()
+                paysDebt
+                    ? debtPayment.form
                     : CashOperationController.store.form()
             }
             methods={methods}
             noteRequired={category?.requires_note ?? false}
+            fullAmount={paysDebt ? debtor?.balance : undefined}
         >
             {(errors) => (
                 <>
@@ -412,14 +446,12 @@ function CategoryOperationDialog({
                         <Label htmlFor={id}>{categoryLabel}</Label>
                         <select
                             id={id}
-                            name={
-                                paysSupplier ? undefined : 'expense_category_id'
-                            }
+                            name={paysDebt ? undefined : 'expense_category_id'}
                             value={choice ?? ''}
                             onChange={(event) =>
                                 setChoice(
-                                    event.target.value === 'supplier'
-                                        ? 'supplier'
+                                    event.target.value === 'debt'
+                                        ? 'debt'
                                         : Number(event.target.value),
                                 )
                             }
@@ -430,37 +462,37 @@ function CategoryOperationDialog({
                                     {item.name}
                                 </option>
                             ))}
-                            {suppliers.length > 0 && (
-                                <option value="supplier">
-                                    Yetkazib beruvchiga to'lov
+                            {debtPayment && (
+                                <option value="debt">
+                                    {debtPayment.optionLabel}
                                 </option>
                             )}
                         </select>
                         <InputError message={errors.expense_category_id} />
                     </div>
-                    {paysSupplier && (
+                    {paysDebt && (
                         <div className="grid gap-2">
-                            <Label htmlFor={`${id}-supplier`}>
-                                Yetkazib beruvchi
+                            <Label htmlFor={`${id}-debtor`}>
+                                {debtPayment.partyLabel}
                             </Label>
                             <select
-                                id={`${id}-supplier`}
+                                id={`${id}-debtor`}
                                 name="counterparty_id"
-                                value={supplierId ?? ''}
+                                value={debtorId ?? ''}
                                 onChange={(event) =>
-                                    setSupplierId(Number(event.target.value))
+                                    setDebtorId(Number(event.target.value))
                                 }
                                 className={selectClassName}
                             >
-                                {suppliers.map((item) => (
+                                {debtPayment.debtors.map((item) => (
                                     <option key={item.id} value={item.id}>
                                         {item.name}
                                     </option>
                                 ))}
                             </select>
-                            {supplier && (
+                            {debtor && (
                                 <p className="text-sm text-muted-foreground">
-                                    Qarz: {formatMoney(supplier.balance)}
+                                    Qarz: {formatMoney(debtor.balance)}
                                 </p>
                             )}
                             <InputError message={errors.counterparty_id} />

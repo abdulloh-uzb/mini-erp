@@ -27,8 +27,9 @@ type FieldErrors = Record<string, string | undefined>;
 
 /**
  * The shared money form: a dialog with Summa, To'lov usuli and Izoh plus any extra fields,
- * used by Kassa (+ Kirim / + Chiqim) and the loan card. Cash operations are permanent (D14),
- * so Saqlash first asks for confirmation, then submits.
+ * used by Kassa (+ Kirim / + Chiqim), the loan card and the debt screens. Cash operations are
+ * permanent (D14), so Saqlash first asks for confirmation, then submits. With `fullAmount`
+ * the To'liq button fills in the whole amount owed.
  */
 export function CashOperationDialog({
     trigger,
@@ -39,6 +40,7 @@ export function CashOperationDialog({
     amountName = 'amount',
     amountLabel = 'Summa',
     noteRequired = false,
+    fullAmount,
     children,
 }: {
     trigger: ReactNode;
@@ -49,10 +51,12 @@ export function CashOperationDialog({
     amountName?: string;
     amountLabel?: string;
     noteRequired?: boolean;
+    fullAmount?: string;
     children?: (errors: FieldErrors) => ReactNode;
 }) {
     const [open, setOpen] = useState(false);
     const [confirming, setConfirming] = useState(false);
+    const [amount, setAmount] = useState('');
     const idPrefix = `cash-${title.replace(/\W+/g, '-').toLowerCase()}`;
 
     return (
@@ -61,6 +65,7 @@ export function CashOperationDialog({
             onOpenChange={(value) => {
                 setOpen(value);
                 setConfirming(false);
+                setAmount('');
             }}
         >
             <DialogTrigger asChild>{trigger}</DialogTrigger>
@@ -76,6 +81,7 @@ export function CashOperationDialog({
                     onSuccess={() => {
                         setOpen(false);
                         setConfirming(false);
+                        setAmount('');
                     }}
                     onError={() => setConfirming(false)}
                     className="space-y-4"
@@ -93,14 +99,35 @@ export function CashOperationDialog({
                                     <Label htmlFor={`${idPrefix}-amount`}>
                                         {amountLabel}
                                     </Label>
-                                    <Input
-                                        id={`${idPrefix}-amount`}
-                                        name={amountName}
-                                        inputMode="decimal"
-                                        required
-                                        autoFocus
-                                        placeholder="0"
-                                    />
+                                    <div className="flex gap-2">
+                                        <Input
+                                            id={`${idPrefix}-amount`}
+                                            name={amountName}
+                                            inputMode="decimal"
+                                            required
+                                            autoFocus
+                                            placeholder="0"
+                                            value={amount}
+                                            onChange={(event) =>
+                                                setAmount(event.target.value)
+                                            }
+                                        />
+                                        {fullAmount !== undefined && (
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                onClick={() =>
+                                                    setAmount(
+                                                        String(
+                                                            Number(fullAmount),
+                                                        ),
+                                                    )
+                                                }
+                                            >
+                                                To'liq
+                                            </Button>
+                                        )}
+                                    </div>
                                     <InputError message={errors[amountName]} />
                                 </div>
                                 <div className="grid gap-2">

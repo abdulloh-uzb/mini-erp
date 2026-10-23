@@ -4,6 +4,7 @@ use App\Enums\StorePermission;
 use App\Http\Controllers\Admin\StoreController;
 use App\Http\Controllers\CashOperationController;
 use App\Http\Controllers\CounterpartyController;
+use App\Http\Controllers\CustomerDebtController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\InventoryCountController;
@@ -100,6 +101,15 @@ Route::middleware(['auth', 'store'])->group(function () {
         ->middleware('can:'.StorePermission::ExpenseCreate->value)->name('cash.operations.store');
     Route::post('cash/operations/{operation}/reverse', [CashOperationController::class, 'reverse'])
         ->middleware('can:'.StorePermission::CashOperationReverse->value)->name('cash.operations.reverse');
+
+    Route::get('customer-debts', [CustomerDebtController::class, 'index'])
+        ->middleware('can:'.StorePermission::CustomerDebtsView->value)->name('customer-debts.index');
+    Route::get('customer-debts/{counterparty}', [CustomerDebtController::class, 'show'])
+        ->middleware('can:'.StorePermission::CustomerDebtsView->value)->name('customer-debts.show');
+    Route::post('customer-debts/payments', [CustomerDebtController::class, 'pay'])
+        ->middleware('can:'.StorePermission::CustomerDebtPaymentCreate->value)->name('customer-debts.payments.store');
+    Route::post('customer-debts/write-offs', [CustomerDebtController::class, 'writeOff'])
+        ->middleware('can:'.StorePermission::DebtWriteOff->value)->name('customer-debts.write-offs.store');
 
     Route::middleware('can:'.StorePermission::SupplierDebtsManage->value)->group(function () {
         Route::get('supplier-debts', [SupplierDebtController::class, 'index'])->name('supplier-debts.index');

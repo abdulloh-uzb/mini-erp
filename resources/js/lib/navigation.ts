@@ -5,6 +5,7 @@ import {
     ClipboardList,
     Contact,
     HandCoins,
+    Handshake,
     Landmark,
     LayoutGrid,
     Package,
@@ -19,6 +20,7 @@ import { dashboard } from '@/routes';
 import { index as adminStores } from '@/routes/admin/stores';
 import { index as cash } from '@/routes/cash';
 import { index as counterparties } from '@/routes/counterparties';
+import { index as customerDebts } from '@/routes/customer-debts';
 import { index as employees } from '@/routes/employees';
 import { index as inventoryCounts } from '@/routes/inventory-counts';
 import { index as loans } from '@/routes/loans';
@@ -107,6 +109,12 @@ const storeNavigation: NavGroup[] = [
                 href: cash(),
                 icon: Wallet,
                 permission: 'cash-operations.view',
+            },
+            {
+                title: 'Mijoz qarzlari',
+                href: customerDebts(),
+                icon: Handshake,
+                permission: 'customer-debts.view',
             },
             {
                 title: 'Yetkazib beruvchi qarzlari',

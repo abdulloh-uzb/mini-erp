@@ -26,13 +26,17 @@ use LogicException;
  * @property numeric-string $amount
  * @property int|null $document_id
  * @property int|null $cash_operation_id
+ * @property int|null $expense_category_id
+ * @property string|null $note
  * @property int $author_id
  * @property Carbon|null $created_at
  * @property-read Counterparty $counterparty
  * @property-read Document|null $document
  * @property-read CashOperation|null $cashOperation
+ * @property-read ExpenseCategory|null $expenseCategory
+ * @property-read User $author
  */
-#[Fillable(['team_id', 'counterparty_id', 'side', 'type', 'amount', 'document_id', 'cash_operation_id', 'author_id'])]
+#[Fillable(['team_id', 'counterparty_id', 'side', 'type', 'amount', 'document_id', 'cash_operation_id', 'expense_category_id', 'note', 'author_id'])]
 class DebtEntry extends Model
 {
     /** @use HasFactory<DebtEntryFactory> */
@@ -80,6 +84,26 @@ class DebtEntry extends Model
     public function cashOperation(): BelongsTo
     {
         return $this->belongsTo(CashOperation::class);
+    }
+
+    /**
+     * Get the user who recorded the entry.
+     *
+     * @return BelongsTo<User, $this>
+     */
+    public function author(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'author_id');
+    }
+
+    /**
+     * Get the expense category a write-off counts under (Umidsiz qarz), if any.
+     *
+     * @return BelongsTo<ExpenseCategory, $this>
+     */
+    public function expenseCategory(): BelongsTo
+    {
+        return $this->belongsTo(ExpenseCategory::class);
     }
 
     /**

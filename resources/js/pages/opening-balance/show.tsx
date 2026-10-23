@@ -30,6 +30,7 @@ import { show } from '@/routes/opening-balance';
 import type {
     DocumentData,
     EnumOption,
+    OpeningDebtData,
     PickerOption,
     PickerProduct,
 } from '@/types';
@@ -44,7 +45,7 @@ type Props = {
     directions: EnumOption[];
 };
 
-type Section = 'stock' | 'cash' | 'supplier_debts' | 'loans';
+type Section = 'stock' | 'cash' | 'customer_debts' | 'supplier_debts' | 'loans';
 
 type DraftLoan = {
     key: string;
@@ -170,19 +171,17 @@ function ExecutedOpeningBalance({
                     ))}
                 </div>
             )}
+            {section === 'customer_debts' && (
+                <ExecutedDebtsTable
+                    party="Mijoz"
+                    debts={document.customer_debts ?? []}
+                />
+            )}
             {section === 'supplier_debts' && (
-                <ListTable columns={['Yetkazib beruvchi', 'Qarz summasi']}>
-                    {(document.supplier_debts ?? []).map((debt) => (
-                        <tr key={debt.id} className="border-t">
-                            <td className="px-4 py-3">
-                                {debt.counterparty_name}
-                            </td>
-                            <td className="px-4 py-3 tabular-nums">
-                                {formatMoney(debt.amount)}
-                            </td>
-                        </tr>
-                    ))}
-                </ListTable>
+                <ExecutedDebtsTable
+                    party="Yetkazib beruvchi"
+                    debts={document.supplier_debts ?? []}
+                />
             )}
             {section === 'loans' && (
                 <ListTable
@@ -224,7 +223,7 @@ function ExecutedOpeningBalance({
     );
 }
 
-/** The opening balance's sections; the customer debts tab comes with ticket 08. */
+/** The opening balance's sections. */
 function SectionTabs({
     value,
     onChange,
@@ -237,6 +236,7 @@ function SectionTabs({
     const sections: { id: Section; label: string }[] = [
         { id: 'stock', label: 'Tovarlar' },
         { id: 'cash', label: 'Kassa' },
+        { id: 'customer_debts', label: 'Mijoz qarzlari' },
         { id: 'supplier_debts', label: 'Yetkazib beruvchi qarzlari' },
         { id: 'loans', label: 'Qarzlar' },
     ];
@@ -315,13 +315,8 @@ function OpeningBalanceForm({
             due_date: loan.due_date ?? '',
             note: loan.note ?? '',
         })),
-        supplier_debts: (document?.supplier_debts ?? []).map(
-            (debt): DraftDebt => ({
-                key: newLineKey(),
-                counterparty_id: debt.counterparty_id,
-                amount: debt.amount,
-            }),
-        ),
+        customer_debts: (document?.customer_debts ?? []).map(toDraftDebt),
+        supplier_debts: (document?.supplier_debts ?? []).map(toDraftDebt),
     });
     const errors = form.errors as LineErrors & FieldErrors;
     const errorKeys = Object.keys(form.errors);
@@ -329,6 +324,7 @@ function OpeningBalanceForm({
         [
             ['stock', 'lines.'],
             ['cash', 'payments.'],
+            ['customer_debts', 'customer_debts.'],
             ['supplier_debts', 'supplier_debts.'],
             ['loans', 'loans.'],
         ] as [Section, string][]
@@ -351,10 +347,8 @@ function OpeningBalanceForm({
             due_date: loan.due_date === '' ? null : loan.due_date,
             note: loan.note === '' ? null : loan.note,
         })),
-        supplier_debts: data.supplier_debts.map((debt) => ({
-            counterparty_id: debt.counterparty_id,
-            amount: debt.amount,
-        })),
+        customer_debts: data.customer_debts.map(toDebtInput),
+        supplier_debts: data.supplier_debts.map(toDebtInput),
         lines: data.lines.map((line) => ({
             location_id: line.location_id,
             product_id: line.product_id,
@@ -429,8 +423,23 @@ function OpeningBalanceForm({
                 />
             )}
 
+            {section === 'customer_debts' && (
+                <DebtsSection
+                    field="customer_debts"
+                    party="Mijoz"
+                    newPartyLabel="Yangi mijoz"
+                    debts={form.data.customer_debts}
+                    counterparties={counterparties}
+                    errors={errors}
+                    onChange={(debts) => form.setData('customer_debts', debts)}
+                />
+            )}
+
             {section === 'supplier_debts' && (
-                <SupplierDebtsSection
+                <DebtsSection
+                    field="supplier_debts"
+                    party="Yetkazib beruvchi"
+                    newPartyLabel="Yangi yetkazib beruvchi"
                     debts={form.data.supplier_debts}
                     counterparties={counterparties}
                     errors={errors}
@@ -593,13 +602,52 @@ function CashSection({
     );
 }
 
-/** What the store already owed each supplier; one row per supplier. */
-function SupplierDebtsSection({
+const toDraftDebt = (debt: OpeningDebtData): DraftDebt => ({
+    key: newLineKey(),
+    counterparty_id: debt.counterparty_id,
+    amount: debt.amount,
+});
+
+const toDebtInput = (debt: DraftDebt) => ({
+    counterparty_id: debt.counterparty_id,
+    amount: debt.amount,
+});
+
+/** The executed opening balance's debts on one side, read-only. */
+function ExecutedDebtsTable({
+    party,
+    debts,
+}: {
+    party: string;
+    debts: OpeningDebtData[];
+}) {
+    return (
+        <ListTable columns={[party, 'Qarz summasi']}>
+            {debts.map((debt) => (
+                <tr key={debt.id} className="border-t">
+                    <td className="px-4 py-3">{debt.counterparty_name}</td>
+                    <td className="px-4 py-3 tabular-nums">
+                        {formatMoney(debt.amount)}
+                    </td>
+                </tr>
+            ))}
+        </ListTable>
+    );
+}
+
+/** What customers already owed the store, or the store owed each supplier; one row per counterparty. */
+function DebtsSection({
+    field,
+    party,
+    newPartyLabel,
     debts,
     counterparties,
     errors,
     onChange,
 }: {
+    field: 'customer_debts' | 'supplier_debts';
+    party: string;
+    newPartyLabel: string;
     debts: DraftDebt[];
     counterparties: PickerOption[];
     errors: FieldErrors;
@@ -624,12 +672,12 @@ function SupplierDebtsSection({
     return (
         <div className="flex flex-col gap-4">
             {debts.length > 0 && (
-                <ListTable columns={['Yetkazib beruvchi', 'Qarz summasi', '']}>
+                <ListTable columns={[party, 'Qarz summasi', '']}>
                     {debts.map((debt, index) => (
                         <tr key={debt.key} className="border-t align-top">
                             <td className="px-4 py-3">
                                 <select
-                                    aria-label="Yetkazib beruvchi"
+                                    aria-label={party}
                                     value={debt.counterparty_id}
                                     onChange={(event) =>
                                         update(index, {
@@ -653,7 +701,7 @@ function SupplierDebtsSection({
                                 <InputError
                                     message={
                                         errors[
-                                            `supplier_debts.${index}.counterparty_id`
+                                            `${field}.${index}.counterparty_id`
                                         ]
                                     }
                                 />
@@ -670,9 +718,7 @@ function SupplierDebtsSection({
                                     }
                                 />
                                 <InputError
-                                    message={
-                                        errors[`supplier_debts.${index}.amount`]
-                                    }
+                                    message={errors[`${field}.${index}.amount`]}
                                 />
                             </td>
                             <td className="px-4 py-3">
@@ -710,7 +756,7 @@ function SupplierDebtsSection({
                     trigger={
                         <Button type="button" variant="ghost">
                             <Plus />
-                            Yangi yetkazib beruvchi
+                            {newPartyLabel}
                         </Button>
                     }
                     onCreated={(counterparty) => add(counterparty.id)}

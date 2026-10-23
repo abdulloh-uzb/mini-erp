@@ -18,9 +18,9 @@ class SaveOpeningBalanceRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request. The stock section's lines each carry
      * a location and a cost per piece, which may stay empty until execution. The Kassa section
-     * has an optional amount per payment method; the Yetkazib beruvchi qarzlari section lists
-     * what the store owes each supplier, once per supplier; the Qarzlar section lists the open
-     * loans.
+     * has an optional amount per payment method. The Mijoz qarzlari and Yetkazib beruvchi
+     * qarzlari sections list what customers owe the store and what the store owes each
+     * supplier, once per counterparty. The Qarzlar section lists the open loans.
      *
      * @return array<string, ValidationRule|array<mixed>|string>
      */
@@ -38,6 +38,9 @@ class SaveOpeningBalanceRequest extends FormRequest
             'loans.*.principal' => ['required', ...$money, 'gt:0'],
             'loans.*.due_date' => ['nullable', 'date'],
             'loans.*.note' => ['nullable', 'string', 'max:1000'],
+            'customer_debts' => ['sometimes', 'array', 'max:500'],
+            'customer_debts.*.counterparty_id' => ['required', 'integer', 'distinct', Rule::exists(Counterparty::class, 'id')->where('team_id', $this->user()->team_id)],
+            'customer_debts.*.amount' => ['required', ...$money, 'gt:0'],
             'supplier_debts' => ['sometimes', 'array', 'max:500'],
             'supplier_debts.*.counterparty_id' => ['required', 'integer', 'distinct', Rule::exists(Counterparty::class, 'id')->where('team_id', $this->user()->team_id)],
             'supplier_debts.*.amount' => ['required', ...$money, 'gt:0'],
@@ -61,17 +64,30 @@ class SaveOpeningBalanceRequest extends FormRequest
     }
 
     /**
-     * Get the supplier debts as opening debt rows.
+     * Get the customer and supplier debts as opening debt rows.
      *
      * @return array<int, array{side: DebtSide, counterparty_id: int, amount: string}>
      */
-    public function openingSupplierDebts(): array
+    public function openingDebts(): array
+    {
+        return [
+            ...$this->openingDebtRows('customer_debts', DebtSide::Customer),
+            ...$this->openingDebtRows('supplier_debts', DebtSide::Supplier),
+        ];
+    }
+
+    /**
+     * Get one debt section as opening debt rows.
+     *
+     * @return array<int, array{side: DebtSide, counterparty_id: int, amount: string}>
+     */
+    private function openingDebtRows(string $key, DebtSide $side): array
     {
         return array_map(fn (array $debt) => [
-            'side' => DebtSide::Supplier,
+            'side' => $side,
             'counterparty_id' => (int) $debt['counterparty_id'],
             'amount' => (string) $debt['amount'],
-        ], array_values((array) $this->validated('supplier_debts', [])));
+        ], array_values((array) $this->validated($key, [])));
     }
 
     /**
@@ -101,6 +117,8 @@ class SaveOpeningBalanceRequest extends FormRequest
             'loans.*.principal' => 'asosiy summa',
             'loans.*.due_date' => 'qaytarish muddati',
             'loans.*.note' => 'izoh',
+            'customer_debts.*.counterparty_id' => 'mijoz',
+            'customer_debts.*.amount' => 'qarz summasi',
             'supplier_debts.*.counterparty_id' => 'yetkazib beruvchi',
             'supplier_debts.*.amount' => 'qarz summasi',
         ];

@@ -22,8 +22,8 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * The store's one opening balance (owner only), with its Tovarlar, Kassa, Yetkazib beruvchi
- * qarzlari and Qarzlar sections: saved as often as needed, executed once.
+ * The store's one opening balance (owner only), with its Tovarlar, Kassa, Mijoz qarzlari,
+ * Yetkazib beruvchi qarzlari and Qarzlar sections: saved as often as needed, executed once.
  * Until it is executed, or the owner says there is none, no document can be executed (D13).
  */
 class OpeningBalanceController extends Controller
@@ -149,7 +149,7 @@ class OpeningBalanceController extends Controller
             $document->openingLoans()->delete();
             $document->openingLoans()->createMany($request->openingLoans());
             $document->openingDebts()->delete();
-            $document->openingDebts()->createMany($request->openingSupplierDebts());
+            $document->openingDebts()->createMany($request->openingDebts());
 
             return $document;
         });

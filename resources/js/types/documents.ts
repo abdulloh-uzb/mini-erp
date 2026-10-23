@@ -41,6 +41,8 @@ export type DocumentData = {
     payments?: Partial<Record<string, string>>;
     /** The opening balance's open loans (Qarzlar tab), when loaded. */
     loans?: OpeningLoanData[];
+    /** The opening balance's customer debts (Mijoz qarzlari tab), when loaded. */
+    customer_debts?: OpeningDebtData[];
     /** The opening balance's supplier debts (Yetkazib beruvchi qarzlari tab), when loaded. */
     supplier_debts?: OpeningDebtData[];
 };
