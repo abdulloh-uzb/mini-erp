@@ -1,7 +1,8 @@
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { EmptyState, ListPageHeader, ListTable } from '@/components/list-page';
 import { ReportPeriodForm, ReportStat } from '@/components/report';
 import { formatDate, formatMoney } from '@/lib/format';
+import { index as cash } from '@/routes/cash';
 import { cashFlow } from '@/routes/reports';
 
 type InOut = { in: string; out: string };
@@ -111,7 +112,17 @@ export default function CashFlow({ report, filters }: Props) {
                                 {report.by_day.map((row) => (
                                     <tr key={row.date} className="border-t">
                                         <td className="px-4 py-3 font-medium">
-                                            {formatDate(row.date)}
+                                            <Link
+                                                href={cash({
+                                                    query: {
+                                                        from: row.date,
+                                                        to: row.date,
+                                                    },
+                                                })}
+                                                className="underline underline-offset-4"
+                                            >
+                                                {formatDate(row.date)}
+                                            </Link>
                                         </td>
                                         <InOutCells row={row} />
                                     </tr>
