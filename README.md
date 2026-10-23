@@ -11,6 +11,7 @@ Brief: [Texnik topshiriq: Ichimliklar do'koni uchun mini-ERP](https://telegra.ph
 | [Architecture](docs/architecture.md) | How the system is structured and why: tenancy, document lifecycle, the execution module, average cost, money and debt ledgers, permissions, reports |
 | [User guide](docs/user-guide.md) | Every flow for the owner and the employee, in English, with the Uzbek labels as they appear on screen |
 | [Prompt log](docs/prompts.md) | Every prompt given to the AI while building the project, verbatim and in order |
+| [ChatGPT prompts](docs/chatgpt-prompts.md) | Prompts sent to ChatGPT to understand the questions Claude asked and the trade and accounting domain, copied as they were |
 
 Background: [`GLOSSARY.md`](GLOSSARY.md) (domain terms), [`docs/adr/`](docs/adr/) (decision records) and [`docs/research/`](docs/research/) (competitor, accounting and UX research).
 
