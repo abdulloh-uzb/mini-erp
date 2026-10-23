@@ -8,27 +8,21 @@ import { cn, toUrl } from '@/lib/utils';
 import { edit as editAppearance } from '@/routes/appearance';
 import { edit } from '@/routes/profile';
 import { edit as editSecurity } from '@/routes/security';
-import { index as teams } from '@/routes/teams';
 import type { NavItem } from '@/types';
 
 const sidebarNavItems: NavItem[] = [
     {
-        title: 'Profile',
+        title: 'Profil',
         href: edit(),
         icon: null,
     },
     {
-        title: 'Security',
+        title: 'Xavfsizlik',
         href: editSecurity(),
         icon: null,
     },
     {
-        title: 'Teams',
-        href: teams(),
-        icon: null,
-    },
-    {
-        title: 'Appearance',
+        title: "Ko'rinish",
         href: editAppearance(),
         icon: null,
     },
@@ -40,15 +34,15 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
     return (
         <div className="px-4 py-6">
             <Heading
-                title="Settings"
-                description="Manage your profile and account settings"
+                title="Sozlamalar"
+                description="Profil va hisob sozlamalari"
             />
 
             <div className="flex flex-col lg:flex-row lg:space-x-12">
                 <aside className="w-full max-w-xl lg:w-48">
                     <nav
                         className="flex flex-col space-y-1 space-x-0"
-                        aria-label="Settings"
+                        aria-label="Sozlamalar"
                     >
                         {sidebarNavItems.map((item, index) => (
                             <Button

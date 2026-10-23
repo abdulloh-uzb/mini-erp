@@ -1,7 +1,7 @@
 import { Form, Head } from '@inertiajs/react';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
-import TeamInvitationAlert from '@/components/team-invitation-alert';
+import PhoneInput from '@/components/phone-input';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,17 +9,15 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { login } from '@/routes';
 import { store } from '@/routes/register';
-import type { TeamInvitationContext } from '@/types';
 
 type Props = {
     passwordRules: string;
-    teamInvitation?: TeamInvitationContext | null;
 };
 
-export default function Register({ passwordRules, teamInvitation }: Props) {
+export default function Register({ passwordRules }: Props) {
     return (
         <>
-            <Head title="Register" />
+            <Head title="Ro'yxatdan o'tish" />
             <Form
                 {...store.form()}
                 resetOnSuccess={['password', 'password_confirmation']}
@@ -28,16 +26,9 @@ export default function Register({ passwordRules, teamInvitation }: Props) {
             >
                 {({ processing, errors }) => (
                     <>
-                        {teamInvitation && (
-                            <TeamInvitationAlert
-                                invitation={teamInvitation}
-                                action="Register"
-                            />
-                        )}
-
                         <div className="grid gap-6">
                             <div className="grid gap-2">
-                                <Label htmlFor="name">Name</Label>
+                                <Label htmlFor="name">Ismingiz</Label>
                                 <Input
                                     id="name"
                                     type="text"
@@ -46,37 +37,45 @@ export default function Register({ passwordRules, teamInvitation }: Props) {
                                     tabIndex={1}
                                     autoComplete="name"
                                     name="name"
-                                    placeholder="Full name"
+                                    placeholder="Ism va familiya"
                                 />
-                                <InputError
-                                    message={errors.name}
-                                    className="mt-2"
-                                />
+                                <InputError message={errors.name} />
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="email">Email address</Label>
-                                <Input
-                                    id="email"
-                                    type="email"
+                                <Label htmlFor="phone">Telefon raqami</Label>
+                                <PhoneInput
+                                    id="phone"
+                                    name="phone"
                                     required
                                     tabIndex={2}
-                                    autoComplete="email"
-                                    name="email"
-                                    placeholder="email@example.com"
                                 />
-                                <InputError message={errors.email} />
+                                <InputError message={errors.phone} />
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="password">Password</Label>
+                                <Label htmlFor="store_name">Do'kon nomi</Label>
+                                <Input
+                                    id="store_name"
+                                    type="text"
+                                    required
+                                    tabIndex={3}
+                                    autoComplete="organization"
+                                    name="store_name"
+                                    placeholder="Masalan, Ichimliklar dunyosi"
+                                />
+                                <InputError message={errors.store_name} />
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="password">Parol</Label>
                                 <PasswordInput
                                     id="password"
                                     required
-                                    tabIndex={3}
+                                    tabIndex={4}
                                     autoComplete="new-password"
                                     name="password"
-                                    placeholder="Password"
+                                    placeholder="Parol"
                                     passwordrules={passwordRules}
                                 />
                                 <InputError message={errors.password} />
@@ -84,15 +83,15 @@ export default function Register({ passwordRules, teamInvitation }: Props) {
 
                             <div className="grid gap-2">
                                 <Label htmlFor="password_confirmation">
-                                    Confirm password
+                                    Parolni tasdiqlang
                                 </Label>
                                 <PasswordInput
                                     id="password_confirmation"
                                     required
-                                    tabIndex={4}
+                                    tabIndex={5}
                                     autoComplete="new-password"
                                     name="password_confirmation"
-                                    placeholder="Confirm password"
+                                    placeholder="Parolni qayta kiriting"
                                     passwordrules={passwordRules}
                                 />
                                 <InputError
@@ -103,31 +102,18 @@ export default function Register({ passwordRules, teamInvitation }: Props) {
                             <Button
                                 type="submit"
                                 className="mt-2 w-full"
-                                tabIndex={5}
+                                tabIndex={6}
                                 data-test="register-user-button"
                             >
                                 {processing && <Spinner />}
-                                Create account
+                                Do'kon ochish
                             </Button>
                         </div>
 
                         <div className="text-center text-sm text-muted-foreground">
-                            Already have an account?{' '}
-                            <TextLink
-                                href={
-                                    teamInvitation
-                                        ? login.url({
-                                              query: {
-                                                  invitation:
-                                                      teamInvitation.code,
-                                              },
-                                          })
-                                        : login()
-                                }
-                                data-test="team-invitation-login-link"
-                                tabIndex={6}
-                            >
-                                Log in
+                            Hisobingiz bormi?{' '}
+                            <TextLink href={login()} tabIndex={7}>
+                                Kirish
                             </TextLink>
                         </div>
                     </>
@@ -138,6 +124,6 @@ export default function Register({ passwordRules, teamInvitation }: Props) {
 }
 
 Register.layout = {
-    title: 'Create an account',
-    description: 'Enter your details below to create your account',
+    title: "Do'koningizni oching",
+    description: "Ma'lumotlaringizni kiriting: siz do'kon egasi bo'lasiz",
 };

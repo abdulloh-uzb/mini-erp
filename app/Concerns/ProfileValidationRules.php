@@ -3,6 +3,7 @@
 namespace App\Concerns;
 
 use App\Models\User;
+use App\Support\Phone;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Validation\Rule;
 
@@ -17,7 +18,7 @@ trait ProfileValidationRules
     {
         return [
             'name' => $this->nameRules(),
-            'email' => $this->emailRules($userId),
+            'phone' => $this->phoneRules($userId),
         ];
     }
 
@@ -32,17 +33,14 @@ trait ProfileValidationRules
     }
 
     /**
-     * Get the validation rules used to validate user emails.
+     * Get the validation rules used to validate normalised phone numbers, unique system-wide.
      *
      * @return array<int, ValidationRule|array<mixed>|string>
      */
-    protected function emailRules(?int $userId = null): array
+    protected function phoneRules(?int $userId = null): array
     {
         return [
-            'required',
-            'string',
-            'email',
-            'max:255',
+            ...Phone::rules(),
             $userId === null
                 ? Rule::unique(User::class)
                 : Rule::unique(User::class)->ignore($userId),

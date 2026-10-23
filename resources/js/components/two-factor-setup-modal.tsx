@@ -104,7 +104,7 @@ function TwoFactorSetupStep({
                     <div className="relative flex w-full items-center justify-center">
                         <div className="absolute inset-0 top-1/2 h-px w-full bg-border" />
                         <span className="relative bg-card px-2 py-1">
-                            or, enter the code manually
+                            yoki kodni qo'lda kiriting
                         </span>
                     </div>
 
@@ -210,7 +210,7 @@ function TwoFactorVerificationStep({
                                 onClick={onBack}
                                 disabled={processing}
                             >
-                                Back
+                                Orqaga
                             </Button>
                             <Button
                                 type="submit"
@@ -219,7 +219,7 @@ function TwoFactorVerificationStep({
                                     processing || code.length < OTP_MAX_LENGTH
                                 }
                             >
-                                Confirm
+                                Tasdiqlash
                             </Button>
                         </div>
                     </div>
@@ -262,27 +262,27 @@ export default function TwoFactorSetupModal({
     }>(() => {
         if (twoFactorEnabled) {
             return {
-                title: 'Two-factor authentication enabled',
+                title: 'Ikki bosqichli tasdiqlash yoqildi',
                 description:
-                    'Two-factor authentication is now enabled. Scan the QR code or enter the setup key in your authenticator app.',
-                buttonText: 'Close',
+                    'Ikki bosqichli tasdiqlash yoqildi. QR kodni skanerlang yoki sozlash kalitini autentifikator ilovangizga kiriting.',
+                buttonText: 'Yopish',
             };
         }
 
         if (showVerificationStep) {
             return {
-                title: 'Verify authentication code',
+                title: 'Autentifikatsiya kodini tasdiqlang',
                 description:
-                    'Enter the 6-digit code from your authenticator app',
-                buttonText: 'Continue',
+                    'Autentifikator ilovangizdagi 6 xonali kodni kiriting',
+                buttonText: 'Davom etish',
             };
         }
 
         return {
-            title: 'Enable two-factor authentication',
+            title: 'Ikki bosqichli tasdiqlashni yoqish',
             description:
-                'To finish enabling two-factor authentication, scan the QR code or enter the setup key in your authenticator app',
-            buttonText: 'Continue',
+                'Yoqishni tugatish uchun QR kodni skanerlang yoki sozlash kalitini autentifikator ilovangizga kiriting',
+            buttonText: 'Davom etish',
         };
     }, [twoFactorEnabled, showVerificationStep]);
 

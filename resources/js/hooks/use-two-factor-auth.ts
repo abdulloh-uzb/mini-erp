@@ -68,7 +68,7 @@ export const useTwoFactorAuth = (): UseTwoFactorAuthReturn => {
 
             setManualSetupKey(key);
         } catch {
-            setErrors((prev) => [...prev, 'Failed to fetch a setup key']);
+            setErrors((prev) => [...prev, "Sozlash kalitini olib bo'lmadi"]);
             setManualSetupKey(null);
         }
     }, [submit]);
@@ -79,7 +79,7 @@ export const useTwoFactorAuth = (): UseTwoFactorAuthReturn => {
             const codes = (await submit(recoveryCodes())) as string[];
             setRecoveryCodesList(codes);
         } catch {
-            setErrors((prev) => [...prev, 'Failed to fetch recovery codes']);
+            setErrors((prev) => [...prev, "Tiklash kodlarini olib bo'lmadi"]);
             setRecoveryCodesList([]);
         }
     }, [submit]);

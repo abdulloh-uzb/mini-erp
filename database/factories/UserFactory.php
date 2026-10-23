@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use App\Enums\TeamRole;
+use App\Enums\StoreRole;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 /**
+ * By default a user is the owner of a new store.
+ *
  * @extends Factory<User>
  */
 class UserFactory extends Factory
@@ -28,9 +30,10 @@ class UserFactory extends Factory
     {
         return [
             'name' => fake()->name(),
-            'email' => fake()->unique()->safeEmail(),
-            'email_verified_at' => now(),
+            'phone' => '+99890'.fake()->unique()->numerify('#######'),
             'password' => static::$password ??= Hash::make('password'),
+            'is_active' => true,
+            'team_id' => Team::factory(),
             'remember_token' => Str::random(10),
             'two_factor_secret' => null,
             'two_factor_recovery_codes' => null,
@@ -43,26 +46,40 @@ class UserFactory extends Factory
      */
     public function configure(): static
     {
-        return $this->afterCreating(function ($user) {
-            $team = Team::factory()->personal()->create([
-                'name' => $user->name."'s Team",
-            ]);
-
-            $team->members()->attach($user, [
-                'role' => TeamRole::Owner->value,
-            ]);
-
-            $user->switchTeam($team);
+        return $this->afterCreating(function (User $user) {
+            if ($user->team_id !== null) {
+                $user->assignStoreRole(StoreRole::Owner);
+            }
         });
     }
 
     /**
-     * Indicate that the model's email address should be unverified.
+     * Indicate that the user is an employee of the given store.
      */
-    public function unverified(): static
+    public function employeeOf(Team $team): static
     {
         return $this->state(fn (array $attributes) => [
-            'email_verified_at' => null,
+            'team_id' => $team->id,
+        ])->afterCreating(fn (User $user) => $user->assignStoreRole(StoreRole::Employee));
+    }
+
+    /**
+     * Indicate that the user is a platform super-admin with no store.
+     */
+    public function superAdmin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'team_id' => null,
+        ])->afterCreating(fn (User $user) => $user->assignStoreRole(StoreRole::SuperAdmin));
+    }
+
+    /**
+     * Indicate that the user has been deactivated.
+     */
+    public function inactive(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_active' => false,
         ]);
     }
 

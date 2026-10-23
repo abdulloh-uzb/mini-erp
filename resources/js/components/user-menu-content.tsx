@@ -28,7 +28,7 @@ export function UserMenuContent({ user }: Props) {
         <>
             <DropdownMenuLabel className="p-0 font-normal">
                 <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                    <UserInfo user={user} showEmail={true} />
+                    <UserInfo user={user} subtitle={user.phone} />
                 </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
@@ -41,7 +41,7 @@ export function UserMenuContent({ user }: Props) {
                         onClick={cleanup}
                     >
                         <Settings className="mr-2" />
-                        Settings
+                        Sozlamalar
                     </Link>
                 </DropdownMenuItem>
             </DropdownMenuGroup>
@@ -55,7 +55,7 @@ export function UserMenuContent({ user }: Props) {
                     data-test="logout-button"
                 >
                     <LogOut className="mr-2" />
-                    Log out
+                    Chiqish
                 </Link>
             </DropdownMenuItem>
         </>

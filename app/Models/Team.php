@@ -2,97 +2,70 @@
 
 namespace App\Models;
 
-use App\Concerns\GeneratesUniqueTeamSlugs;
-use App\Enums\TeamRole;
+use App\Enums\StoreRole;
 use Database\Factories\TeamFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 
 /**
+ * A store (UI: do'kon). ADR-0003: the starter kit's Team is the tenant.
+ *
  * @property int $id
  * @property string $name
- * @property string $slug
- * @property bool $is_personal
+ * @property Carbon|null $blocked_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- * @property Carbon|null $deleted_at
- * @property-read Collection<int, TeamInvitation> $invitations
- * @property-read Collection<int, Membership> $memberships
- * @property-read Collection<int, User> $members
+ * @property-read Collection<int, User> $users
+ * @property-read User|null $owner
+ * @property-read Collection<int, User> $employees
  */
-#[Fillable(['name', 'slug', 'is_personal'])]
+#[Fillable(['name', 'blocked_at'])]
 class Team extends Model
 {
     /** @use HasFactory<TeamFactory> */
-    use GeneratesUniqueTeamSlugs, HasFactory, SoftDeletes;
+    use HasFactory;
 
     /**
-     * Bootstrap the model and its traits.
-     */
-    protected static function boot(): void
-    {
-        parent::boot();
-
-        static::creating(function (Team $team) {
-            if (empty($team->slug)) {
-                $team->slug = static::generateUniqueTeamSlug($team->name);
-            }
-        });
-
-        static::updating(function (Team $team) {
-            if ($team->isDirty('name')) {
-                $team->slug = static::generateUniqueTeamSlug($team->name, $team->id);
-            }
-        });
-    }
-
-    /**
-     * Get the team owner.
-     */
-    public function owner(): ?Model
-    {
-        return $this->members()
-            ->wherePivot('role', TeamRole::Owner->value)
-            ->first();
-    }
-
-    /**
-     * Get all members of this team.
+     * Get everyone working in the store.
      *
-     * @return BelongsToMany<User, $this, Membership, 'pivot'>
+     * @return HasMany<User, $this>
      */
-    public function members(): BelongsToMany
+    public function users(): HasMany
     {
-        return $this->belongsToMany(User::class, 'team_members', 'team_id', 'user_id')
-            ->using(Membership::class)
-            ->withPivot(['role'])
-            ->withTimestamps();
+        return $this->hasMany(User::class);
     }
 
     /**
-     * Get all memberships for this team.
+     * Get the store's owner.
      *
-     * @return HasMany<Membership, $this>
+     * @return HasOne<User, $this>
      */
-    public function memberships(): HasMany
+    public function owner(): HasOne
     {
-        return $this->hasMany(Membership::class);
+        return $this->hasOne(User::class)->withStoreRole(StoreRole::Owner);
     }
 
     /**
-     * Get all invitations for this team.
+     * Get the store's employees.
      *
-     * @return HasMany<TeamInvitation, $this>
+     * @return HasMany<User, $this>
      */
-    public function invitations(): HasMany
+    public function employees(): HasMany
     {
-        return $this->hasMany(TeamInvitation::class);
+        return $this->hasMany(User::class)->withStoreRole(StoreRole::Employee);
+    }
+
+    /**
+     * Determine if the super-admin has blocked the store.
+     */
+    public function isBlocked(): bool
+    {
+        return $this->blocked_at !== null;
     }
 
     /**
@@ -103,15 +76,7 @@ class Team extends Model
     protected function casts(): array
     {
         return [
-            'is_personal' => 'boolean',
+            'blocked_at' => 'datetime',
         ];
-    }
-
-    /**
-     * Get the route key for the model.
-     */
-    public function getRouteKeyName(): string
-    {
-        return 'slug';
     }
 }

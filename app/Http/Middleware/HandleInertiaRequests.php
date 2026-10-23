@@ -42,10 +42,12 @@ class HandleInertiaRequests extends Middleware
             'name' => config('app.name'),
             'auth' => [
                 'user' => $user,
+                'role' => fn () => $user?->storeRole()?->value,
+                'roleLabel' => fn () => $user?->storeRole()?->label(),
+                'store' => fn () => $user?->team?->only(['id', 'name']),
+                'permissions' => fn () => $user?->storePermissions() ?? [],
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
-            'currentTeam' => fn () => $user?->currentTeam ? $user->toUserTeam($user->currentTeam) : null,
-            'teams' => fn () => $user?->toUserTeams(includeCurrent: true) ?? [],
         ];
     }
 }
