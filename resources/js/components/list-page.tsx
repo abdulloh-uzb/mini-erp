@@ -163,9 +163,12 @@ export function FilteredEmptyState({
 export function ListTable({
     columns,
     children,
+    footer,
 }: {
     columns: ReactNode[];
     children: ReactNode;
+    /** Rows for a `<tfoot>`, such as a totals row. */
+    footer?: ReactNode;
 }) {
     return (
         <div className="overflow-hidden rounded-xl border">
@@ -180,6 +183,9 @@ export function ListTable({
                     </tr>
                 </thead>
                 <tbody>{children}</tbody>
+                {footer && (
+                    <tfoot className="border-t bg-muted/50">{footer}</tfoot>
+                )}
             </table>
         </div>
     );

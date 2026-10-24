@@ -22,14 +22,55 @@ test('balances roll sub-warehouses up into their warehouse', function () {
     $this->actingAs($owner)->get(route('stock.index'))
         ->assertInertia(fn (Assert $page) => $page
             ->component('stock/index')
-            ->has('rows', 2)
+            ->has('rows', 3)
             ->where('rows.0.location_name', 'Asosiy ombor')
             ->where('rows.0.product_name', 'Coca-Cola 1.5 L')
             ->where('rows.0.quantity', 14)
             ->where('rows.0.pieces_per_block', 6)
             ->where('rows.1.location_name', 'Hovli')
-            ->where('rows.1.quantity', 6),
+            ->where('rows.1.quantity', 6)
+            ->where('rows.2.product_name', 'Suv 0.5 L')
+            ->where('rows.2.quantity', 0),
         );
+});
+
+test('each balance gets a stock level and a level tab shows only its rows', function () {
+    $owner = User::factory()->create();
+    $location = Location::factory()->for($owner->team)->create();
+    foreach (['Bor' => 51, 'Kam' => 10, 'Tugagan' => 0, "O'rtacha" => 11] as $name => $quantity) {
+        StockBalance::factory()->for($location)->create([
+            'product_id' => Product::factory()->for($owner->team)->create(['name' => $name]),
+            'quantity' => $quantity,
+        ]);
+    }
+
+    $this->actingAs($owner)->get(route('stock.index'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('rows.0.level', 'enough')
+            ->where('rows.1.level', 'low')
+            ->where('rows.2.level', 'medium')
+            ->where('rows.3.level', 'out')
+            ->where('level_counts', ['out' => 1, 'low' => 1, 'medium' => 1, 'enough' => 1]),
+        );
+    $this->actingAs($owner)->get(route('stock.index', ['level' => 'low']))
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('rows', 1)
+            ->where('rows.0.product_name', 'Kam')
+            ->where('level_counts.medium', 1)
+            ->where('filters.level', 'low'),
+        );
+});
+
+test('a sold-out archived product is left out', function () {
+    $owner = User::factory()->create();
+    $location = Location::factory()->for($owner->team)->create();
+    StockBalance::factory()->for($location)->create([
+        'product_id' => Product::factory()->for($owner->team)->create(['archived_at' => now()]),
+        'quantity' => 0,
+    ]);
+
+    $this->actingAs($owner)->get(route('stock.index'))
+        ->assertInertia(fn (Assert $page) => $page->has('rows', 0));
 });
 
 test('filtering by a warehouse includes its sub-warehouses, by a sub-warehouse only itself', function () {
