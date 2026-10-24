@@ -15,7 +15,12 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { formatDateTime, formatMoney, formatQuantity } from '@/lib/format';
+import {
+    formatBlockPrice,
+    formatDateTime,
+    formatMoney,
+    formatQuantity,
+} from '@/lib/format';
 import { cn } from '@/lib/utils';
 import type {
     DocumentData,
@@ -379,6 +384,12 @@ export function DocumentLinesTable({
                                                 aria-label={priceLabel}
                                                 className="w-32"
                                             />
+                                            <p className="mt-1 text-xs whitespace-nowrap text-muted-foreground">
+                                                {formatBlockPrice(
+                                                    line.price,
+                                                    piecesPerBlock,
+                                                )}
+                                            </p>
                                             <InputError
                                                 message={error('price')}
                                             />

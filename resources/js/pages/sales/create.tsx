@@ -31,7 +31,12 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { usePermissions } from '@/hooks/use-permissions';
-import { formatMoney, formatQuantity, splitQuantity } from '@/lib/format';
+import {
+    formatBlockPrice,
+    formatMoney,
+    formatQuantity,
+    splitQuantity,
+} from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { create } from '@/routes/sales';
 import type {
@@ -856,6 +861,7 @@ function CartLine({
                         line.price === '' && 'border-red-500',
                     )}
                 />
+                <span className="text-xs text-muted-foreground">/dona</span>
             </div>
             <div className="flex flex-wrap justify-between gap-x-2 text-xs">
                 <span
@@ -866,6 +872,11 @@ function CartLine({
                 >
                     Qoldiq: {formatQuantity(stock, perBlock)}
                 </span>
+                {formatBlockPrice(line.price, perBlock) && (
+                    <span className="text-muted-foreground">
+                        {formatBlockPrice(line.price, perBlock)}
+                    </span>
+                )}
                 {averageCost !== undefined && (
                     <span
                         className={cn(

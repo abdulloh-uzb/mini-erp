@@ -27,7 +27,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { usePermissions } from '@/hooks/use-permissions';
-import { formatMoney } from '@/lib/format';
+import { formatBlockPrice, formatMoney } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { index } from '@/routes/products';
 import type { Paginated } from '@/types';
@@ -175,7 +175,10 @@ function ProductRow({
             </td>
             {showCost && (
                 <td className="px-4 py-3 text-right tabular-nums">
-                    <PerPiece amount={product.average_cost ?? null} />
+                    <PerPiece
+                        amount={product.average_cost ?? null}
+                        piecesPerBlock={product.pieces_per_block}
+                    />
                 </td>
             )}
             <td
@@ -185,7 +188,10 @@ function ProductRow({
                 )}
                 title={isBelowCost ? 'Sotuv narxi tannarxdan past' : undefined}
             >
-                <PerPiece amount={product.sale_price} />
+                <PerPiece
+                    amount={product.sale_price}
+                    piecesPerBlock={product.pieces_per_block}
+                />
             </td>
             {canManage && (
                 <td className="px-4 py-3">
@@ -216,7 +222,13 @@ function ProductRow({
 }
 
 /** "13 000 so'm / dona", or a dash when there is no amount. */
-function PerPiece({ amount }: { amount: string | null }) {
+function PerPiece({
+    amount,
+    piecesPerBlock,
+}: {
+    amount: string | null;
+    piecesPerBlock: number;
+}) {
     if (amount === null) {
         return <span className="text-muted-foreground">—</span>;
     }
@@ -225,6 +237,11 @@ function PerPiece({ amount }: { amount: string | null }) {
         <>
             {formatMoney(amount)}
             <span className="text-muted-foreground"> / dona</span>
+            {piecesPerBlock > 1 && (
+                <div className="text-xs text-muted-foreground">
+                    {formatBlockPrice(amount, piecesPerBlock)}
+                </div>
+            )}
         </>
     );
 }
@@ -234,10 +251,21 @@ function PerPiece({ amount }: { amount: string | null }) {
  */
 function ProductDialog({ product }: { product?: Product }) {
     const [open, setOpen] = useState(false);
+    const [salePrice, setSalePrice] = useState(product?.sale_price ?? '');
+    const [piecesPerBlock, setPiecesPerBlock] = useState(
+        product?.pieces_per_block ?? 1,
+    );
     const idPrefix = product ? `product-${product.id}` : 'product-new';
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog
+            open={open}
+            onOpenChange={(isOpen) => {
+                setOpen(isOpen);
+                setSalePrice(product?.sale_price ?? '');
+                setPiecesPerBlock(product?.pieces_per_block ?? 1);
+            }}
+        >
             <DialogTrigger asChild>
                 {product ? (
                     <Button variant="outline" size="sm">
@@ -307,6 +335,11 @@ function ProductDialog({ product }: { product?: Product }) {
                                     defaultValue={
                                         product?.pieces_per_block ?? 1
                                     }
+                                    onChange={(event) =>
+                                        setPiecesPerBlock(
+                                            Number(event.target.value) || 1,
+                                        )
+                                    }
                                     required
                                 />
                                 <InputError message={errors.pieces_per_block} />
@@ -323,11 +356,26 @@ function ProductDialog({ product }: { product?: Product }) {
                                     step="0.01"
                                     inputMode="decimal"
                                     defaultValue={product?.sale_price ?? ''}
+                                    onChange={(event) =>
+                                        setSalePrice(event.target.value)
+                                    }
                                     placeholder="13000"
                                 />
+                                {formatBlockPrice(
+                                    salePrice,
+                                    piecesPerBlock,
+                                ) && (
+                                    <p className="text-sm font-medium">
+                                        {formatBlockPrice(
+                                            salePrice,
+                                            piecesPerBlock,
+                                        )}
+                                    </p>
+                                )}
                                 <p className="text-xs text-muted-foreground">
-                                    Yangi sotuvda narx shu bilan to'ladi. Bo'sh
-                                    qolsa, oxirgi sotuv narxi olinadi.
+                                    Narx 1 dona uchun kiritiladi. Yangi sotuvda
+                                    narx shu bilan to'ladi; bo'sh qolsa, oxirgi
+                                    sotuv narxi olinadi.
                                 </p>
                                 <InputError message={errors.sale_price} />
                             </div>

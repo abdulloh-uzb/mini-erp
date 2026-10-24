@@ -15,6 +15,26 @@ export function formatMoney(
     return `${moneyFormatter.format(value).replace(/\s/g, ' ')} so'm`;
 }
 
+/**
+ * What a per-piece price comes to for a whole block, "1 blok = 78 000 so'm"; null for a
+ * product sold only by the piece or an empty price. Prices are always stored per piece.
+ */
+export function formatBlockPrice(
+    price: string | number | null | undefined,
+    piecesPerBlock: number,
+): string | null {
+    if (
+        piecesPerBlock <= 1 ||
+        price === null ||
+        price === undefined ||
+        price === ''
+    ) {
+        return null;
+    }
+
+    return `1 blok = ${formatMoney(Number(price) * piecesPerBlock)}`;
+}
+
 export function splitQuantity(
     pieces: number,
     piecesPerBlock: number,
