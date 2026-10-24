@@ -362,7 +362,7 @@ function LocationSelect({
 TransferShow.layout = {
     breadcrumbs: [
         {
-            title: "Ko'chirishlar",
+            title: 'Transferlar',
             href: index(),
         },
     ],

@@ -48,30 +48,82 @@ import { index as transfers } from '@/routes/transfers';
 import type { NavGroup, StoreRole } from '@/types';
 
 /**
- * The one shared store menu (spec: Frontend, sidebar groups). Each item is shown
- * only when the user holds its permission; empty groups are hidden. Later tickets
- * add their items to the matching group.
+ * The one shared store menu (spec: Frontend, sidebar groups), ordered by how often each
+ * page is used: the till first, then daily sales, stock and purchases, money, reports
+ * and setup last. Labels use the words shop staff already say (vozvrat, postavshik,
+ * transfer) where the literal Uzbek reads awkwardly. Each item is shown only when the
+ * user holds its permission; empty groups are hidden.
  */
 const storeNavigation: NavGroup[] = [
     {
         title: null,
-        items: [{ title: 'Bosh sahifa', href: dashboard(), icon: LayoutGrid }],
-    },
-    {
-        title: 'Savdo',
         items: [
+            { title: 'Bosh sahifa', href: dashboard(), icon: LayoutGrid },
             {
                 title: 'Sotuv',
                 href: sale(),
                 icon: ScanBarcode,
                 permission: 'sale.draft',
             },
+        ],
+    },
+    {
+        title: 'Savdo',
+        items: [
             {
-                title: 'Qaytarishlar',
+                title: 'Vozvratlar',
                 href: salesReturns(),
                 icon: Undo2,
                 permission: 'sales-return.draft',
                 draftKind: 'sales_return',
+            },
+            {
+                title: 'Mijoz qarzlari',
+                href: customerDebts(),
+                icon: Handshake,
+                permission: 'customer-debts.view',
+            },
+            {
+                title: 'Kontragentlar',
+                href: counterparties(),
+                icon: Contact,
+                permission: 'counterparties.view',
+            },
+        ],
+    },
+    {
+        title: 'Ombor',
+        items: [
+            {
+                title: 'Mahsulotlar',
+                href: products(),
+                icon: Package,
+                permission: 'products.view',
+            },
+            {
+                title: 'Qoldiqlar',
+                href: stock(),
+                icon: Boxes,
+                permission: 'stock-report.view',
+            },
+            {
+                title: 'Transferlar',
+                href: transfers(),
+                icon: ArrowLeftRight,
+                permission: 'transfer.draft',
+            },
+            {
+                title: 'Inventarizatsiya',
+                href: inventoryCounts(),
+                icon: ClipboardCheck,
+                permission: 'inventory-count.draft',
+                draftKind: 'inventory_count',
+            },
+            {
+                title: 'Omborlar',
+                href: locations(),
+                icon: Warehouse,
+                permission: 'locations.manage',
             },
         ],
     },
@@ -86,69 +138,27 @@ const storeNavigation: NavGroup[] = [
                 draftKind: 'purchase',
             },
             {
-                title: 'Yetkazib beruvchiga qaytarishlar',
+                title: 'Postavshikka vozvrat',
                 href: supplierReturns(),
                 icon: Undo2,
                 permission: 'supplier-return.manage',
             },
-        ],
-    },
-    {
-        title: 'Ombor',
-        items: [
             {
-                title: 'Qoldiqlar',
-                href: stock(),
-                icon: Boxes,
-                permission: 'stock-report.view',
-            },
-            {
-                title: "Ko'chirishlar",
-                href: transfers(),
-                icon: ArrowLeftRight,
-                permission: 'transfer.draft',
-            },
-            {
-                title: 'Inventarizatsiyalar',
-                href: inventoryCounts(),
-                icon: ClipboardCheck,
-                permission: 'inventory-count.draft',
-                draftKind: 'inventory_count',
-            },
-            {
-                title: 'Mahsulotlar',
-                href: products(),
-                icon: Package,
-                permission: 'products.view',
-            },
-            {
-                title: 'Omborlar',
-                href: locations(),
-                icon: Warehouse,
-                permission: 'locations.manage',
+                title: 'Postavshik qarzlari',
+                href: supplierDebts(),
+                icon: Landmark,
+                permission: 'supplier-debts.manage',
             },
         ],
     },
     {
-        title: 'Pul',
+        title: 'Moliya',
         items: [
             {
                 title: 'Kassa',
                 href: cash(),
                 icon: Wallet,
                 permission: 'cash-operations.view',
-            },
-            {
-                title: 'Mijoz qarzlari',
-                href: customerDebts(),
-                icon: Handshake,
-                permission: 'customer-debts.view',
-            },
-            {
-                title: 'Yetkazib beruvchi qarzlari',
-                href: supplierDebts(),
-                icon: Landmark,
-                permission: 'supplier-debts.manage',
             },
             {
                 title: 'Qarzlar',
@@ -159,21 +169,10 @@ const storeNavigation: NavGroup[] = [
         ],
     },
     {
-        title: 'Kontragentlar',
-        items: [
-            {
-                title: 'Kontragentlar',
-                href: counterparties(),
-                icon: Contact,
-                permission: 'counterparties.view',
-            },
-        ],
-    },
-    {
         title: 'Hisobotlar',
         items: [
             {
-                title: 'Sotuvlar hisoboti',
+                title: 'Sotuvlar',
                 href: salesReport(),
                 icon: BarChart3,
                 permission: 'sales-report.view',

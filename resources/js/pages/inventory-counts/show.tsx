@@ -631,7 +631,7 @@ function TotalRow({
 InventoryCountShow.layout = {
     breadcrumbs: [
         {
-            title: 'Inventarizatsiyalar',
+            title: 'Inventarizatsiya',
             href: index(),
         },
     ],

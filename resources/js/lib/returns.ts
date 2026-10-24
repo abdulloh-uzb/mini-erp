@@ -14,7 +14,7 @@ export const returnKinds = {
         controller: SalesReturnController,
         sourceShow: SaleController.show,
         executePermission: 'sales-return.execute',
-        title: 'Qaytarishlar',
+        title: 'Vozvratlar',
         single: 'Qaytarish',
         description:
             'Sotilgan tovarlar qaytishi. Xodim qoralama saqlaydi, egasi bajaradi: avval mijoz qarzi kamayadi, qolgani pul bilan qaytariladi.',
@@ -28,7 +28,7 @@ export const returnKinds = {
         controller: SupplierReturnController,
         sourceShow: PurchaseController.show,
         executePermission: 'supplier-return.manage',
-        title: 'Yetkazib beruvchiga qaytarishlar',
+        title: 'Postavshikka vozvrat',
         single: 'Yetkazib beruvchiga qaytarish',
         description:
             'Xarid qilingan tovarlarni yetkazib beruvchiga qaytarish: avval yetkazib beruvchiga qarz kamayadi, qolgani kassaga qaytadi.',

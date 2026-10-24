@@ -45,10 +45,10 @@ export default function TransfersIndex({
 
     return (
         <>
-            <Head title="Ko'chirishlar" />
+            <Head title="Transferlar" />
             <div className="flex flex-1 flex-col gap-6 p-4">
                 <ListPageHeader
-                    title="Ko'chirishlar"
+                    title="Transferlar"
                     description="Tovarlarni bir joydan boshqasiga ko'chirish. Pul va tannarxga ta'sir qilmaydi."
                     action={newTransfer}
                 />
@@ -90,7 +90,7 @@ export default function TransfersIndex({
 TransfersIndex.layout = {
     breadcrumbs: [
         {
-            title: "Ko'chirishlar",
+            title: 'Transferlar',
             href: index(),
         },
     ],

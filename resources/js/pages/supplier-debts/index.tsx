@@ -23,10 +23,10 @@ type Props = {
 export default function SupplierDebtsIndex({ debts, total, methods }: Props) {
     return (
         <>
-            <Head title="Yetkazib beruvchi qarzlari" />
+            <Head title="Postavshik qarzlari" />
             <div className="flex flex-1 flex-col gap-6 p-4">
                 <ListPageHeader
-                    title="Yetkazib beruvchi qarzlari"
+                    title="Postavshik qarzlari"
                     description="Xaridlarning to'lanmagan qismi va boshlang'ich qarzlar. To'lov kassadan chiqadi va qarzni kamaytiradi."
                 />
 
@@ -105,7 +105,7 @@ function SupplierPaymentDialog({
 SupplierDebtsIndex.layout = {
     breadcrumbs: [
         {
-            title: 'Yetkazib beruvchi qarzlari',
+            title: 'Postavshik qarzlari',
             href: index(),
         },
     ],

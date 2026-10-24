@@ -68,7 +68,7 @@ If execution is refused, nothing changes. The reason appears in red next to the 
 
 ### Document lists
 
-Every document list (**Xaridlar**, **Qaytarishlar**, **Ko'chirishlar**, **Inventarizatsiyalar**, …) has the same tools:
+Every document list (**Xaridlar**, **Vozvratlar**, **Transferlar**, **Inventarizatsiya**, …) has the same tools:
 
 - tabs **Hammasi** (all), **Qoralama** (drafts) and **Bajarilgan** (executed);
 - filters **Dan** / **Gacha** (from/to date), **Joy** (location), **Kontragent** (counterparty) and **Muallif** (author);
@@ -203,7 +203,7 @@ If any line asks for more than the location holds, the sale is refused and that 
 
 ### Customer debts
 
-_Menu: **Pul → Mijoz qarzlari**. Owner and employee._
+_Menu: **Savdo → Mijoz qarzlari**. Owner and employee._
 
 The list shows every customer who owes money and how much (**Qarz**). Click a customer to open their card. It shows **Qarz qanday yopiladi** (which sales are still unpaid; payments always pay off the oldest sale first) and **Tarix** (every sale, payment, return and write-off).
 
@@ -211,7 +211,7 @@ The list shows every customer who owes money and how much (**Qarz**). Click a cu
 
 - **To'lov olish** on the customer's row in the list;
 - **To'lov olish** on the customer's card;
-- **Pul → Kassa → Kirim**, choosing **Mijoz qarzi to'lovi** and the customer.
+- **Moliya → Kassa → Kirim**, choosing **Mijoz qarzi to'lovi** and the customer.
 
 Enter **Summa** (or click **To'liq** for the full debt) and **To'lov usuli**. A payment can't exceed the debt (_Summa qarzdan oshmasligi kerak_).
 
@@ -219,7 +219,7 @@ Enter **Summa** (or click **To'liq** for the full debt) and **To'lov usuli**. A 
 
 ### Supplier debts
 
-_Owner only. Menu: **Pul → Yetkazib beruvchi qarzlari**._
+_Owner only. Menu: **Xarid → Postavshik qarzlari**._
 
 The list shows what you owe each supplier. Click **To'lash** (pay) on a row, or use **Kassa → Chiqim → Yetkazib beruvchiga to'lov**, then enter the amount and method. You can't pay more than you owe, or more than the register holds in that method.
 
@@ -229,9 +229,9 @@ The list shows what you owe each supplier. Click **To'lash** (pay) on a row, or 
 
 ### Sales return (customer brings goods back)
 
-_Menu: **Savdo → Qaytarishlar**. The employee drafts, the owner executes._
+_Menu: **Savdo → Vozvratlar**. The employee drafts, the owner executes._
 
-1. Start from the executed sale: **Qaytarish yaratish** on its receipt. Or go to **Qaytarishlar → Yangi qaytarish** and pick the sale (search by number or customer).
+1. Start from the executed sale: **Qaytarish yaratish** on its receipt. Or go to **Vozvratlar → Yangi qaytarish** and pick the sale (search by number or customer).
 2. Every line starts at 0, with **Sotilgan / Qaytarilgan / Qaytarish mumkin** (sold / already returned / can still be returned) shown. Enter **Blok** / **Dona** for what comes back. You can't return more than is returnable (_Ko'pi bilan 2 blok + 0 dona qaytarish mumkin_).
 3. Choose **Joy** (where the goods go back) and, if money is to be handed back, **To'lov usuli**.
 4. The panel shows how much **Qarzdan kamaydi** (comes off the customer's debt) and how much is paid back in money. The return always reduces the customer's debt first, and only the rest is refunded.
@@ -241,7 +241,7 @@ The goods come back at the cost they were sold at, and revenue and profit for th
 
 ### Supplier return (you send goods back)
 
-_Owner only. Menu: **Xarid → Yetkazib beruvchiga qaytarishlar**._
+_Owner only. Menu: **Xarid → Postavshikka vozvrat**._
 
 1. **Qaytarish yaratish** on an executed purchase, or **Yangi qaytarish** and pick the purchase.
 2. Enter what goes back, up to what was bought minus what was already returned. The location must still hold those pieces.
@@ -251,7 +251,7 @@ _Owner only. Menu: **Xarid → Yetkazib beruvchiga qaytarishlar**._
 
 ## 9. Transfer
 
-_Menu: **Ombor → Ko'chirishlar**. Owner and employee._
+_Menu: **Ombor → Transferlar**. Owner and employee._
 
 Moves goods from one location to another, for example from the main warehouse to the shop floor. Money and costs are not affected.
 
@@ -266,7 +266,7 @@ Moves goods from one location to another, for example from the main warehouse to
 
 ## 10. Inventory count
 
-_Menu: **Ombor → Inventarizatsiyalar**. The employee counts, the owner reviews and executes._
+_Menu: **Ombor → Inventarizatsiya**. The employee counts, the owner reviews and executes._
 
 ### Employee: count
 
@@ -277,7 +277,7 @@ _Menu: **Ombor → Inventarizatsiyalar**. The employee counts, the owner reviews
 
 ### Owner: review and execute
 
-1. Open the draft (home inbox or the **Inventarizatsiyalar** badge).
+1. Open the draft (home inbox or the **Inventarizatsiya** badge).
 2. Each line shows **Kutilgan** (expected), **Sanalgan** (counted), **Farq** (difference) and **Farq summasi** (difference valued at average cost), marked as **Kamomad** (shortage) or **Ortiqcha** (surplus).
 3. **Bajarish**. The stock of each listed product is set to the counted quantity. Products not in the count keep their stock.
 
@@ -287,7 +287,7 @@ _Menu: **Ombor → Inventarizatsiyalar**. The employee counts, the owner reviews
 
 ## 11. Cash register
 
-_Menu: **Pul → Kassa**._
+_Menu: **Moliya → Kassa**._
 
 The cash register is the list of every money movement in the store. Sales, purchases, returns, debt payments and loans add their operations automatically. Here you record the rest.
 
@@ -318,7 +318,7 @@ Saving asks for confirmation, because **cash operations are permanent**. To corr
 
 ## 12. Loans
 
-_Owner only. Menu: **Pul → Qarzlar**._
+_Owner only. Menu: **Moliya → Qarzlar**._
 
 Use loans for money lent or borrowed outside sales and purchases, for example a loan from a relative or to a neighbouring shop.
 

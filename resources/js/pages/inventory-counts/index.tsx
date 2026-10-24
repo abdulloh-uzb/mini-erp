@@ -45,10 +45,10 @@ export default function InventoryCountsIndex({
 
     return (
         <>
-            <Head title="Inventarizatsiyalar" />
+            <Head title="Inventarizatsiya" />
             <div className="flex flex-1 flex-col gap-6 p-4">
                 <ListPageHeader
-                    title="Inventarizatsiyalar"
+                    title="Inventarizatsiya"
                     description="Joydagi tovarlarni sanash. Xodim sanab saqlaydi, egasi kutilgan va sanalganni solishtirib bajaradi."
                     action={newCount}
                 />
@@ -90,7 +90,7 @@ export default function InventoryCountsIndex({
 InventoryCountsIndex.layout = {
     breadcrumbs: [
         {
-            title: 'Inventarizatsiyalar',
+            title: 'Inventarizatsiya',
             href: index(),
         },
     ],
