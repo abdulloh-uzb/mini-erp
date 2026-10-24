@@ -1,4 +1,5 @@
 import { Head, router } from '@inertiajs/react';
+import { Plus } from 'lucide-react';
 import {
     EmptyState,
     FilteredEmptyState,
@@ -7,6 +8,9 @@ import {
     ListTable,
     ListTabs,
 } from '@/components/list-page';
+import type { ReceiptOptions } from '@/components/stock-receipt-dialog';
+import { StockReceiptDialog } from '@/components/stock-receipt-dialog';
+import { Button } from '@/components/ui/button';
 import { formatMoney, splitQuantity } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { index } from '@/routes/stock';
@@ -36,6 +40,8 @@ type Props = {
         level: StockLevel | null;
     };
     locations: PickerOption[];
+    /** Present only for users who may see costs and execute purchases (+ Kirim). */
+    receipt?: ReceiptOptions;
 };
 
 export default function StockIndex({
@@ -44,8 +50,11 @@ export default function StockIndex({
     total_value,
     filters,
     locations,
+    receipt,
 }: Props) {
     const showCosts = total_value !== undefined;
+    const receiptProduct = (productId: number) =>
+        receipt?.products.find((product) => product.id === productId);
     const isFiltered =
         filters.search !== '' ||
         filters.location_id !== null ||
@@ -70,6 +79,19 @@ export default function StockIndex({
                 <ListPageHeader
                     title="Qoldiqlar"
                     description="Hozirgi qoldiqlar. Ichki omborlar o'z omboriga qo'shib ko'rsatiladi."
+                    action={
+                        receipt && (
+                            <StockReceiptDialog
+                                options={receipt}
+                                trigger={
+                                    <Button>
+                                        <Plus />
+                                        Kirim
+                                    </Button>
+                                }
+                            />
+                        )
+                    }
                 />
 
                 <div className="flex flex-wrap items-center gap-3">
@@ -145,12 +167,13 @@ export default function StockIndex({
                                       </div>,
                                   ]
                                 : []),
+                            ...(receipt ? [''] : []),
                         ]}
                         footer={
                             showCosts && (
                                 <tr>
                                     <td
-                                        colSpan={5}
+                                        colSpan={receipt ? 6 : 5}
                                         className="px-4 py-4 text-right"
                                     >
                                         <span className="mr-3 text-base text-muted-foreground">
@@ -202,12 +225,53 @@ export default function StockIndex({
                                         </td>
                                     </>
                                 )}
+                                {receipt && (
+                                    <td className="px-4 py-3 text-right">
+                                        <RowReceipt
+                                            options={receipt}
+                                            product={receiptProduct(
+                                                row.product_id,
+                                            )}
+                                            row={row}
+                                        />
+                                    </td>
+                                )}
                             </tr>
                         ))}
                     </ListTable>
                 )}
             </div>
         </>
+    );
+}
+
+/** The row's + Kirim, pre-set to its product and location; none for archived products. */
+function RowReceipt({
+    options,
+    product,
+    row,
+}: {
+    options: ReceiptOptions;
+    product: ReceiptOptions['products'][number] | undefined;
+    row: StockRow;
+}) {
+    if (!product) {
+        return null;
+    }
+
+    return (
+        <StockReceiptDialog
+            options={options}
+            product={product}
+            locationId={row.location_id}
+            currentQuantity={row.quantity}
+            trigger={
+                <Button variant="outline" size="sm">
+                    <Plus />
+                    Kirim
+                </Button>
+            }
+        />
     );
 }
 

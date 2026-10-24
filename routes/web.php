@@ -17,6 +17,7 @@ use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\SalesReportController;
 use App\Http\Controllers\SalesReturnController;
+use App\Http\Controllers\StockReceiptController;
 use App\Http\Controllers\StockReportController;
 use App\Http\Controllers\SupplierDebtController;
 use App\Http\Controllers\SupplierReturnController;
@@ -110,6 +111,9 @@ Route::middleware(['auth', 'store'])->group(function () {
 
     Route::get('stock', StockReportController::class)
         ->middleware('can:'.StorePermission::StockReportView->value)->name('stock.index');
+    Route::post('stock/receipts', StockReceiptController::class)
+        ->middleware(['can:'.StorePermission::PurchaseExecute->value, 'can:'.StorePermission::CostsView->value])
+        ->name('stock.receipts.store');
 
     Route::middleware('can:'.StorePermission::LocationsManage->value)->group(function () {
         Route::get('locations', [LocationController::class, 'index'])->name('locations.index');

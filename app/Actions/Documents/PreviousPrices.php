@@ -10,7 +10,8 @@ use Illuminate\Support\Facades\DB;
 /**
  * The previous price (Q18, ADR-0004): for each product, the price on the store's most recently
  * executed document line of the same kind. New lines pre-fill from it (sale lines only when the
- * product has no sale price, ADR-0007); a product never bought or sold has none.
+ * product has no sale price, ADR-0007); a product never bought or sold has none. The Qoldiqlar
+ * quick receipt also pre-fills the supplier the product was last bought from.
  */
 class PreviousPrices
 {
@@ -35,6 +36,30 @@ class PreviousPrices
             ->where('position', 1)
             ->pluck('price', 'product_id')
             ->map(fn ($price) => bcadd((string) $price, '0', 2))
+            ->all();
+    }
+
+    /**
+     * Get the supplier of the store's most recently executed purchase per product id.
+     *
+     * @return array<int, int>
+     */
+    public function suppliers(int $storeId): array
+    {
+        $ranked = DocumentLine::query()
+            ->join('documents', 'documents.id', '=', 'document_lines.document_id')
+            ->where('documents.team_id', $storeId)
+            ->where('documents.kind', DocumentKind::Purchase)
+            ->where('documents.status', DocumentStatus::Executed)
+            ->whereNotNull('documents.counterparty_id')
+            ->select(['document_lines.product_id', 'documents.counterparty_id'])
+            ->selectRaw('row_number() over (partition by document_lines.product_id order by documents.executed_at desc, documents.id desc) as position');
+
+        return DB::query()
+            ->fromSub($ranked, 'ranked')
+            ->where('position', 1)
+            ->pluck('counterparty_id', 'product_id')
+            ->map(fn ($counterpartyId) => (int) $counterpartyId)
             ->all();
     }
 }
