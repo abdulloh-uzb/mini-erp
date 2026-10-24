@@ -1,104 +1,121 @@
 # User guide
 
-This guide walks the **owner** and the **employee** of a drinks store through every task in the mini-ERP. The application itself is in Uzbek. Every button, menu item and message is quoted here **in bold or _italics_ exactly as it appears on screen**, with an English explanation next to it.
+How to use the mini-ERP, screen by screen. Every screenshot is the real app, with a demo store.
 
-Words such as _document_, _draft_, _executed_, _piece_, _block_ and _location_ have exact meanings, defined in [`GLOSSARY.md`](../GLOSSARY.md). How and why the system works this way is in [`architecture.md`](architecture.md).
+- **Owner** = _Egasi_. **Employee** = _Xodim_.
+- Buttons and labels are quoted **exactly as on screen**, in Uzbek, with English next to them.
+- Word meanings: [`GLOSSARY.md`](../GLOSSARY.md). How it works inside: [`architecture.md`](architecture.md).
 
 ## Contents
 
-0. [Before you start](#0-before-you-start)
-1. [Sign-up and login](#1-sign-up-and-login)
-2. [Employees](#2-employees)
-3. [Products, warehouses and counterparties](#3-products-warehouses-and-counterparties)
-4. [Opening balance](#4-opening-balance)
-5. [Purchase](#5-purchase)
-6. [Sale](#6-sale)
-7. [Debts](#7-debts)
-8. [Returns](#8-returns)
-9. [Transfer](#9-transfer)
-10. [Inventory count](#10-inventory-count)
-11. [Cash register](#11-cash-register)
-12. [Loans](#12-loans)
-13. [Reports](#13-reports)
-14. [Account settings and the super-admin](#14-account-settings-and-the-super-admin)
+| # | Section | Who |
+| --- | --- | --- |
+| 0 | [3 rules to know first](#0-three-rules-to-know-first) | everyone |
+| 1 | [Sign up, log in, home](#1-sign-up-log-in-home) | everyone |
+| 2 | [Employees](#2-employees) | owner |
+| 3 | [Products, warehouses, counterparties](#3-products-warehouses-counterparties) | owner |
+| 4 | [Opening balance](#4-opening-balance) | owner, once |
+| 5 | [Purchase](#5-purchase) | both |
+| 6 | [Sale](#6-sale) | both |
+| 7 | [Debts](#7-debts) | both |
+| 8 | [Returns](#8-returns) | both |
+| 9 | [Transfer](#9-transfer) | both |
+| 10 | [Inventory count](#10-inventory-count) | both |
+| 11 | [Cash register](#11-cash-register) | both |
+| 12 | [Loans](#12-loans) | owner |
+| 13 | [Reports](#13-reports) | owner (stock and sales: both) |
+| 14 | [Settings and super-admin](#14-settings-and-super-admin) | everyone |
 
 ---
 
-## 0. Before you start
+## 0. Three rules to know first
+
+### Rule 1: Save first, execute second
+
+Every sale, purchase, return, transfer and count is a **document** with two buttons:
+
+| Button | What happens | Can you undo? |
+| --- | --- | --- |
+| **Saqlash** (Save) | stored as **Qoralama** (draft). Nothing moves. | yes: edit or **O'chirish** (delete) |
+| **Bajarish** (Execute) | stock moves, money moves, debts change. Becomes **Bajarilgan**. | **no** |
+
+**Bajarish** always asks first:
+
+![Execute confirmation dialog](images/user-guide/execute-confirm.png)
+
+### Rule 2: A mistake is fixed with the opposite document
+
+| Mistake in | Fix with |
+| --- | --- |
+| a sale | a sales return ([section 8](#8-returns)) |
+| a purchase | a supplier return ([section 8](#8-returns)) |
+| a transfer | **Teskari transfer** ([section 9](#9-transfer)) |
+| a count | a new count ([section 10](#10-inventory-count)) |
+| a cash operation | **Tuzatish** ([section 11](#11-cash-register)) |
+
+### Rule 3: Prices are per piece
+
+- Stock is counted in **dona** (pieces). A **blok** is a case, e.g. 1 blok = 6 dona.
+- Every price you type is for **1 dona**. The block price shows under it: _1 blok = 78 000 so'm_.
+- Payment methods: **Naqd** (cash), **Karta** (card), **Bank o'tkazmasi** (bank transfer).
 
 ### Who can do what
 
-| | Owner (_Egasi_) | Employee (_Xodim_) |
+| | Owner | Employee |
 | --- | --- | --- |
-| Sell, transfer goods | yes | yes |
-| Take customer debt payments, record expenses | yes | yes |
-| Purchases, inventory counts, sales returns | create and execute | create drafts only; the owner executes them |
-| Supplier returns, opening balance, loans, debt write-off, paying suppliers | yes | no |
-| See purchase prices, average cost, profit, cash balance, finance reports | yes | no |
-| Correct a cash operation (**Tuzatish**) | yes | no |
-| Manage employees, products, warehouses | yes | view products only |
-| Counterparties | yes | view, and create inside a document |
+| Sell, transfer | yes | yes |
+| Take debt payments, record expenses | yes | yes |
+| Purchases, counts, sales returns | create and execute | drafts only |
+| Supplier returns, opening balance, loans, write-offs, paying suppliers | yes | no |
+| See costs, profit, cash balance, finance reports | yes | no |
+| Manage employees, products, warehouses | yes | view products |
 
-The left-hand menu shows each person only what they are allowed to open. A page that is not in your menu is refused even if you type its address.
-
-### How quantities and money are shown
-
-- Stock is counted in **pieces** (_dona_), such as one 1.5 L bottle. A **block** (_blok_) is a case of a fixed number of pieces, set per product. Quantities are typed as blocks + pieces and shown as **4 blok + 3 dona**.
-- Money is in Uzbek so'm, shown as **1 250 000 so'm**.
-- Payment methods (_To'lov usuli_): **Naqd** (cash), **Karta** (card: Uzcard/Humo), **Bank o'tkazmasi** (bank transfer). The cash register keeps a separate balance for each.
-
-### Drafts and execution: the rule behind every document
-
-Sales, purchases, returns, transfers, counts and the opening balance are all **documents**, and each one goes through two steps:
-
-1. **Saqlash** (Save) stores it as a **Qoralama** (draft, grey badge). A draft changes nothing: no stock moves and no money moves. You can reopen it, edit it, or delete it with **O'chirish**.
-2. **Bajarish** (Execute) applies it. Stock moves, money enters or leaves the register, and debts change. The badge turns into **Bajarilgan** (executed, green). You always confirm first: _"Bajarilgan hujjatni o'zgartirib yoki o'chirib bo'lmaydi. Davom etasizmi?"_ ("An executed document can't be changed or deleted. Continue?").
-
-**An executed document is permanent.** It can't be edited, deleted or cancelled, and its date is the moment it was executed. You fix a mistake with an opposite document:
-
-| Mistake in | Fix it with |
-| --- | --- |
-| a sale | a sales return (section 8) |
-| a purchase | a supplier return (section 8) |
-| a transfer | a reverse transfer (section 9) |
-| an inventory count | a new count (section 10) |
-| a cash operation | its opposite, **Tuzatish** (section 11) |
-
-If execution is refused, nothing changes. The reason appears in red next to the line or field, for example _Joyda yetarli emas. Qoldiq: 2 blok + 4 dona._ ("Not enough at this location. On hand: 2 blocks + 4 pieces.").
-
-### Document lists
-
-Every document list (**Xaridlar**, **Vozvratlar**, **Transferlar**, **Inventarizatsiya**, …) has the same tools:
-
-- tabs **Hammasi** (all), **Qoralama** (drafts) and **Bajarilgan** (executed);
-- filters **Dan** / **Gacha** (from/to date), **Joy** (location), **Kontragent** (counterparty) and **Muallif** (author);
-- search by document number or counterparty;
-- **Filtrni tozalash** clears every filter.
-
-An executed document shows who created it and who executed it, for example _Yaratdi: Ali · Bajardi: Egasi_.
+The left menu shows only what you may open. Typing a hidden page's address is refused too.
 
 ---
 
-## 1. Sign-up and login
+## 1. Sign up, log in, home
 
 ### Owner: create your store
 
-1. Open the site and click **Ro'yxatdan o'tish** (Register).
-2. Fill in **Ismingiz** (your name), **Telefon raqami** (phone, typed into the mask `+998 __ ___ __ __`), **Parol** (password) twice, and **Do'kon nomi** (store name).
-3. Submit. You are now the owner of a new store. It already has one warehouse, **Asosiy ombor** (main warehouse), and the fixed list of expense categories. You land on **Bosh sahifa** (home).
+![Sign-up page](images/user-guide/register.png)
 
-A phone number can belong to only one account. If yours is taken, the form says so.
+1. Click **Ro'yxatdan o'tish** (Register).
+2. Fill **Ismingiz** (name), **Telefon raqami** (phone), **Parol** (password) twice, **Do'kon nomi** (store name).
+3. Submit.
+
+**Result:** you own a new store with one warehouse, **Asosiy ombor**.
 
 ### Everyone: log in
 
-On **Kirish** (Log in), enter **Telefon raqami** and **Parol**. Tick **Meni eslab qol** (remember me) on your own computer. There is no email login. If you forget your password, ask the owner, or for an owner, the super-admin.
+![Login page](images/user-guide/login.png)
 
-If you see **Do'kon bloklangan.** (store blocked), the super-admin has blocked your store. Your data is kept, and you can log in again once the store is unblocked.
+1. Enter **Telefon raqami** and **Parol**.
+2. Tick **Meni eslab qol** (remember me) on your own computer.
+3. Click **Kirish**.
 
-### Home page
+- Forgot your password? Ask the owner. An owner asks the super-admin.
+- **Do'kon bloklangan.** means the store is blocked. Data is kept.
 
-- **Owner home** shows the _Boshlang'ich qoldiqni kiriting_ card until the opening balance is done (section 4); **Bajarishni kutayotgan qoralamalar** (drafts waiting for you to execute) with **Ochish** (open) links; **Bugun** (today): **Tushum** (revenue), **Sotuvlar soni** (number of sales), **Yalpi foyda** (gross profit) and **Kelgan pul** (money received); **Kassa** (cash per method); and **Qarzlar** (debt totals): **Mijozlar qarzi**, **Yetkazib beruvchilarga qarz**, **Berilgan qarzlar**, **Olingan qarzlar**.
-- **Employee home** shows big buttons **Yangi sotuv** (new sale), **Yangi ko'chirish** (new transfer), **Qarz to'lovi** (debt payment) and **Xarajat** (expense), plus **Mening qoralamalarim** (my drafts) and **Mening sotuvlarim bugun** (my sales today).
+### Owner home
+
+![Owner home page](images/user-guide/owner-home.png)
+
+| Block | Shows |
+| --- | --- |
+| **Bugun** (today) | revenue, number of sales, gross profit, money received |
+| **Kassa** | cash per payment method |
+| **Qarzlar** | what customers owe, what you owe suppliers, loans given and taken |
+| **Bajarishni kutayotgan qoralamalar** | employee drafts waiting for you. **Ochish** opens one. |
+
+Numbers next to menu groups (**Savdo 1**, **Ombor 1**) = drafts waiting there.
+
+### Employee home
+
+![Employee home page](images/user-guide/employee-home.png)
+
+- Big buttons: **Yangi sotuv** (new sale), **Yangi transfer** (new transfer), **Qarz to'lovi** (debt payment), **Xarajat** (expense).
+- **Mening qoralamalarim**: your own drafts.
 
 ---
 
@@ -106,96 +123,178 @@ If you see **Do'kon bloklangan.** (store blocked), the super-admin has blocked y
 
 _Owner only. Menu: **Sozlamalar → Xodimlar**._
 
-- **Add an employee:** click **Xodim qo'shish**, then enter **Ism** (name), **Telefon raqami**, **Parol** and **Parolni tasdiqlang** (confirm password), and click **Qo'shish**. Give the employee their phone and password; they log in straight away.
-- **Reset a forgotten password:** on the employee's row click **Parolni tiklash**, then type the new password.
-- **Someone left:** click **O'chirish** (deactivate). Their status becomes **O'chirilgan**, they are logged out and can't log in, and everything they did stays in the history. **Faollashtirish** lets them back in.
+![Employees list](images/user-guide/employees.png)
+
+### Add an employee
+
+![Add employee dialog](images/user-guide/employee-add.png)
+
+1. Click **Xodim qo'shish**.
+2. Fill **Ism**, **Telefon raqami**, **Parol**, **Parolni tasdiqlang**.
+3. Click **Qo'shish**.
+4. Give the employee their phone and password.
+
+**Result:** they can log in right away.
+
+| Need | Click |
+| --- | --- |
+| reset a forgotten password | **Parolni tiklash** on their row |
+| someone left | **O'chirish**: they're logged out; their history stays |
+| let them back | **Faollashtirish** |
 
 ---
 
-## 3. Products, warehouses and counterparties
+## 3. Products, warehouses, counterparties
 
 ### Products
 
-_Menu: **Ombor → Mahsulotlar**. The owner manages products; employees can only view them._
+_Menu: **Ombor → Mahsulotlar**. Owner edits; employee views._
 
-Click **Mahsulot qo'shish** and enter **Nomi** (name, e.g. _Coca-Cola 1.5 L_), an optional **Shtrix-kod** (barcode) and **Blokdagi dona** (pieces per block, e.g. 6). Products have **no price**: each sale or purchase line fills in the price used last time for that product.
+![Products list](images/user-guide/products.png)
 
-A product you no longer sell can be archived with **Arxivlash**. It disappears from new documents but stays in history and reports. **Arxivdan chiqarish** brings it back.
+- **Tannarx** (average cost) shows to the owner only.
+- **Sotuv narxi** (sale price) turns **red** when it's below cost.
+- Both show the block price under them.
+
+**Add a product:**
+
+![Add product dialog](images/user-guide/product-add.png)
+
+1. Click **Mahsulot qo'shish**.
+2. **Nomi** (name), optional **Shtrix-kod** (barcode).
+3. **Blokdagi dona soni**: pieces in one block, e.g. 6.
+4. Optional **Sotuv narxi** for **1 dona**. The block price appears as you type.
+5. **Saqlash**.
+
+- Sale price empty? A new sale uses the last price this product was sold at.
+- No longer sold? **Arxivlash** hides it from new documents. **Arxivdan chiqarish** brings it back.
 
 ### Warehouses
 
 _Owner only. Menu: **Ombor → Omborlar**._
 
-Stock sits in **locations**: a warehouse (_ombor_) or a sub-warehouse (_ichki ombor_) inside one, one level deep. Add a warehouse with **Ombor qo'shish**, a sub-warehouse with **Ichki ombor qo'shish**, and rename one with **Nomini o'zgartirish**. A sub-warehouse's stock counts towards its warehouse in reports. A location no longer used can be archived.
+![Warehouses](images/user-guide/locations.png)
+
+- **Ombor qo'shish**: a new warehouse.
+- **Ichki ombor qo'shish**: a sub-warehouse inside one (e.g. a fridge). Its stock counts toward its warehouse.
+- **Nomini o'zgartirish**: rename.
 
 ### Counterparties
 
-_Menu: **Kontragentlar**._
+_Menu: **Savdo → Kontragentlar**._
 
-Customers, suppliers and people you lend to or borrow from share one list. You rarely need this page, because inside a sale, purchase or loan you can create one on the spot with **+ Yangi mijoz** / **Yangi yetkazib beruvchi** / **Yangi kontragent** by typing a name and an optional phone.
+![Counterparties](images/user-guide/counterparties.png)
+
+Customers, suppliers and loan parties share one list. You rarely need this page: inside a sale, purchase or loan click **+ Yangi mijoz** / **Yangi** to add one on the spot.
 
 ---
 
 ## 4. Opening balance
 
-_Owner only. Menu: **Sozlamalar → Boshlang'ich qoldiq**._
+_Owner only, once. Menu: **Sozlamalar → Boshlang'ich qoldiq**._
 
-The opening balance records what the store already had on the day it started using the system. **Nothing can be executed in the store** (no sale, purchase, transfer…) until you either execute the opening balance or declare there is none. The opening balance never counts as profit or loss.
+What the store already had on day one. **Nothing can be executed in the store until this is done or skipped.**
 
-1. On the home card _Boshlang'ich qoldiqni kiriting_ click **Kiritish** (enter).
-2. Fill the tabs. You don't have to finish in one sitting: **Saqlash** keeps a draft you can come back to.
-   - **Tovarlar** (goods): for each product, choose its **Joy** (location) and enter **Blok** / **Dona** and **Tannarx/dona** (cost per piece, what one piece cost you). This cost starts the product's average cost.
-   - **Kassa**: how much money you have now in **Naqd**, **Karta** and **Bank o'tkazmasi**.
-   - **Mijoz qarzlari** (customer debts): **Qarz qo'shish**, pick the customer and enter **Qarz summasi**.
-   - **Yetkazib beruvchi qarzlari** (what you owe suppliers): the same, per supplier.
-   - **Qarzlar** (loans already running): **Turi** (_Berilgan_ = you lent, _Olingan_ = you borrowed), **Kontragent**, **Asosiy summa** (principal still outstanding), optional **Muddat** (due date) and **Izoh** (note).
-3. Click **Bajarish** and confirm. The opening balance can be executed only once.
+![Opening balance](images/user-guide/opening-balance.png)
 
-**Starting from zero?** On the home card click **Boshlang'ich qoldiq yo'q** (no opening balance) and confirm with **Boshlang'ich qoldiqsiz ishlash**. You can't enter an opening balance after that, and a saved draft is deleted.
+1. On the home card _Boshlang'ich qoldiqni kiriting_, click **Kiritish**.
+2. Fill the tabs (save any time with **Saqlash**):
+   - **Tovarlar**: product, **Joy**, **Blok** / **Dona**, **Tannarx/dona** (what 1 piece cost you)
+   - **Kassa**: money now in **Naqd**, **Karta**, **Bank o'tkazmasi**
+   - **Mijoz qarzlari** / **Yetkazib beruvchi qarzlari**: debts already running
+   - **Qarzlar**: loans already running
+3. **Bajarish** and confirm.
+
+**Starting from zero?** Click **Boshlang'ich qoldiq yo'q** on the home card, then **Boshlang'ich qoldiqsiz ishlash**.
+
+Never counts as profit or loss.
 
 ---
 
 ## 5. Purchase
 
-_Menu: **Xarid → Xaridlar**. The employee records what arrived; the owner enters prices and executes._
+_Menu: **Xarid → Xaridlar**._
 
-### Employee: record a delivery
+![Purchases list](images/user-guide/purchases.png)
 
-1. **Xaridlar → Yangi xarid**.
-2. Choose **Yetkazib beruvchi** (supplier), using **Yangi** if they are new, and **Joy** (where the goods go).
-3. Scan or search each product (**Mahsulot nomi yoki shtrix-kod**; Enter adds one piece), then set **Blok** / **Dona**. You don't see or enter prices.
-4. Optional **Izoh**, such as the invoice number. Click **Saqlash**. The draft now waits for the owner.
+### Employee: record a delivery (no prices)
 
-### Owner: price, pay and execute
+![New purchase with product search open](images/user-guide/purchase-employee.png)
 
-1. Open the draft from **Bajarishni kutayotgan qoralamalar** on the home page, or from **Xaridlar** (the menu item shows a count badge while drafts wait).
-2. Check the lines. **Narx/dona** (price per piece) is pre-filled with the last purchase price of each product; correct it where needed. Every line needs a price, or execution stops with _Barcha narxlarni kiriting._
-3. Enter how much you paid now in **Naqd**, **Karta** and/or **Bank o'tkazmasi**. Whatever is not paid shows as **Qarzga qoladi** and becomes debt to the supplier.
+1. **Yangi xarid**.
+2. Pick **Yetkazib beruvchi** (supplier) and **Joy** (where goods go).
+3. Click the search box: **every product is listed**. Type to narrow, or scan a barcode.
+4. Set **Blok** / **Dona** for each line.
+5. **Saqlash**.
+
+**Result:** the draft waits for the owner. **Xarid 1** appears on the owner's menu.
+
+### Owner: price, pay, execute
+
+![Purchase draft opened by the owner](images/user-guide/purchase-owner.png)
+
+1. Open the draft from the home page or **Xaridlar**.
+2. Check **Narx/dona**: pre-filled with the last purchase price. The block price shows under it.
+3. Type what you paid now in **Naqd** / **Karta** / **Bank o'tkazmasi**. **Qolganini** fills the rest. The rest shows as **Qarzga qoladi** (supplier debt).
 4. **Bajarish** and confirm.
 
-What happens: the goods enter the location; each product's average cost is recalculated; the paid amounts leave the register; the unpaid part is added to **Yetkazib beruvchi qarzlari**. If a payment method doesn't hold enough money, execution is refused, for example _Kassada naqd yetarli emas_ (not enough cash in the register).
+**Result:**
+
+![Executed purchase](images/user-guide/purchase-executed.png)
+
+- goods are in the warehouse;
+- average cost is recalculated;
+- payments left the register;
+- the unpaid part is now supplier debt.
+
+| Error | Meaning |
+| --- | --- |
+| _Barcha narxlarni kiriting._ | a line has no price |
+| _Kassada naqd yetarli emas_ | not enough cash in the register |
+| red _To'lov jamidan … ko'p_ | you typed more than the total |
 
 ---
 
 ## 6. Sale
 
-_Menu: **Savdo → Sotuv** (or **Yangi sotuv** on the home page). Owner and employee._
+_Menu: **Sotuv** (top of the menu). Owner and employee._
 
-The sale screen is built for speed. Product tiles and a search box sit on the left, and the current sale (the cart) is on the right.
+![Sale screen with two lines in the cart](images/user-guide/sale-screen.png)
 
-1. **Add products.** The cursor starts in the search box. Scan a barcode, or type a name and press **Enter**: each scan adds **+1 dona** and joins an existing line for the same product. Clicking a tile does the same. To sell whole blocks, press **Tab** to reach **Blok** on the line and type the number, or use the line's +/− buttons.
-2. **Check prices.** **Narx/dona** is pre-filled with the product's **Sotuv narxi** (set on the product card), or the last sale price when it has none. A product with neither shows _Narx yo'q_ and must be priced. Owners also see the average cost; when the price is below it the line warns _Narx o'rtacha tannarxdan past_.
-3. **Check stock.** Each line shows what is left at the chosen location, for example _Qoldiq: 10 blok + 4 dona_. The **Joy** (location) is remembered from your last sale.
-4. **Payment.** **Jami** is the total. Choose a method (**Naqd**, **Karta**, **Bank o'tkazmasi**) and type the amount. **Qolganini** puts the remaining amount on the chosen method, and **To'liq naqd** puts the whole total on cash. You can mix methods.
-   - **Qarzga qoladi** shows live what will stay unpaid as the customer's debt.
-   - **Mijoz** (customer) is optional while everything is paid. As soon as part of the sale stays unpaid it becomes **Mijoz (majburiy)** (required). Pick the customer, or create one with **+ Yangi mijoz**. A selected customer's current debt is shown so you can decide whether to sell more on debt.
-   - Change helper: type **Mijoz berdi** (cash the customer handed you) to see **Qaytim** (change to give back). This is only a helper and is not saved.
-   - Payments above the total are refused (_To'lov jami summadan oshib ketdi._).
-5. **Finish.**
-   - **Bajarish (F9)** executes the sale after confirmation. A receipt opens: **Chop etish** prints it, **Qaytarish yaratish** starts a return, and **Yangi sotuv** starts the next sale.
-   - **Saqlash (F2)** parks the sale as a draft and clears the screen for the next customer. Parked sales appear as tabs above the cart (**Qoralamalar (N)**); click one to continue it. **O'chirish** deletes a parked sale.
+Left: product tiles and search. Right: the cart.
 
-If any line asks for more than the location holds, the sale is refused and that line shows what is actually there. Two people can't sell the same last bottle: the second sale is refused.
+1. **Add products.** Scan, or type and press **Enter**: +1 dona each time. Clicking a tile does the same. **+1 blok** adds a whole block.
+2. **Check the price.** Pre-filled from the product's **Sotuv narxi**, else the last sale price. Empty = _Narx yo'q_, type it.
+3. **Check stock.** _Qoldiq_ under each line. Greyed tile = out of stock.
+4. **Pay.** Pick a method, type the amount. **Qolganini** = the rest on this method. **To'liq naqd** = all in cash.
+5. **Bajarish (F9)**.
+
+Searching narrows the tiles:
+
+![Sale screen searching "cola"](images/user-guide/sale-search.png)
+
+### Selling on debt
+
+- The unpaid part shows live as **Qarzga qoladi**.
+- Then the customer is required: **Mijoz (majburiy)**. Pick one or click **Yangi mijoz**.
+
+### Change helper
+
+Type **Mijoz berdi** (cash handed over) to see **Qaytim** (change). Not saved.
+
+### Park a sale
+
+**Saqlash (F2)** parks it as a draft and clears the screen. Parked sales: **Qoralamalar (N)** at the top of the cart.
+
+### The receipt
+
+![Sale receipt](images/user-guide/sale-receipt.png)
+
+- **Chop etish**: print.
+- **Yangi sotuv**: next customer.
+- **Qaytarish yaratish**: start a return for this sale.
+
+Two people can't sell the same last bottle: the second sale is refused.
 
 ---
 
@@ -205,47 +304,66 @@ If any line asks for more than the location holds, the sale is refused and that 
 
 _Menu: **Savdo → Mijoz qarzlari**. Owner and employee._
 
-The list shows every customer who owes money and how much (**Qarz**). Click a customer to open their card. It shows **Qarz qanday yopiladi** (which sales are still unpaid; payments always pay off the oldest sale first) and **Tarix** (every sale, payment, return and write-off).
+![Customer debts list](images/user-guide/customer-debts.png)
 
-**Take a payment** (three ways, same form):
+Click a customer to open their card:
 
-- **To'lov olish** on the customer's row in the list;
-- **To'lov olish** on the customer's card;
-- **Moliya → Kassa → Kirim**, choosing **Mijoz qarzi to'lovi** and the customer.
+![Customer card](images/user-guide/customer-card.png)
 
-Enter **Summa** (or click **To'liq** for the full debt) and **To'lov usuli**. A payment can't exceed the debt (_Summa qarzdan oshmasligi kerak_).
+- **Qarz qanday yopiladi**: which sales are still unpaid. Payments always pay off the **oldest sale first**.
+- **Tarix**: every sale, payment, return and write-off.
 
-**Write off a debt** (owner only): on the customer's card click **Qarzni hisobdan chiqarish**, enter the amount (or **To'liq**) and an optional note, then confirm with **Hisobdan chiqarish**. The debt goes down, no money moves, and the amount appears as an _Umidsiz qarz_ (bad debt) expense in **Foyda va zarar**.
+**Take a payment:**
+
+![Debt payment dialog](images/user-guide/debt-payment.png)
+
+1. **To'lov olish** (on the list row or the card).
+2. **Summa**, or **To'liq** for the whole debt.
+3. **To'lov usuli**, then save.
+
+A payment can't exceed the debt.
+
+**Write off a bad debt** (owner only): **Hisobdan chiqarish** on the card. The debt goes down, no money moves, it shows as _Umidsiz qarz_ in profit and loss.
 
 ### Supplier debts
 
 _Owner only. Menu: **Xarid → Postavshik qarzlari**._
 
-The list shows what you owe each supplier. Click **To'lash** (pay) on a row, or use **Kassa → Chiqim → Yetkazib beruvchiga to'lov**, then enter the amount and method. You can't pay more than you owe, or more than the register holds in that method.
+![Supplier debts](images/user-guide/supplier-debts.png)
+
+1. **To'lash** on the supplier's row.
+2. Amount and method, then save.
+
+You can't pay more than you owe, or more than the register holds.
 
 ---
 
 ## 8. Returns
 
-### Sales return (customer brings goods back)
+### Customer brings goods back (Vozvrat)
 
-_Menu: **Savdo → Vozvratlar**. The employee drafts, the owner executes._
+_Menu: **Savdo → Vozvratlar**. Employee drafts, owner executes._
 
-1. Start from the executed sale: **Qaytarish yaratish** on its receipt. Or go to **Vozvratlar → Yangi qaytarish** and pick the sale (search by number or customer).
-2. Every line starts at 0, with **Sotilgan / Qaytarilgan / Qaytarish mumkin** (sold / already returned / can still be returned) shown. Enter **Blok** / **Dona** for what comes back. You can't return more than is returnable (_Ko'pi bilan 2 blok + 0 dona qaytarish mumkin_).
-3. Choose **Joy** (where the goods go back) and, if money is to be handed back, **To'lov usuli**.
-4. The panel shows how much **Qarzdan kamaydi** (comes off the customer's debt) and how much is paid back in money. The return always reduces the customer's debt first, and only the rest is refunded.
-5. **Saqlash**. The owner opens the draft and clicks **Bajarish**.
+![Sales return draft](images/user-guide/sales-return.png)
 
-The goods come back at the cost they were sold at, and revenue and profit for that sale are reversed.
+1. On the sale receipt click **Qaytarish yaratish**. Or **Vozvratlar → Yangi qaytarish** and pick the sale.
+2. Each line shows **Sotilgan / Qaytarilgan / Qaytarish mumkin** (sold / returned / can return). Type **Blok** / **Dona** coming back.
+3. Pick **Joy** (where goods go back).
+4. **Saqlash**. The owner opens it and clicks **Bajarish**.
 
-### Supplier return (you send goods back)
+**Result:** the customer's debt goes down **first** (**Qarzdan kamayadi**). Only the rest is paid back (**Naqd qaytariladi**).
+
+### You send goods back to a supplier
 
 _Owner only. Menu: **Xarid → Postavshikka vozvrat**._
 
-1. **Qaytarish yaratish** on an executed purchase, or **Yangi qaytarish** and pick the purchase.
-2. Enter what goes back, up to what was bought minus what was already returned. The location must still hold those pieces.
-3. **Bajarish**. Your debt to the supplier goes down first; whatever is left comes back into the register in the chosen method.
+![Pick the purchase to return from](images/user-guide/supplier-return-pick.png)
+
+1. Pick the executed purchase (or **Qaytarish yaratish** on it).
+2. Type what goes back.
+3. **Bajarish**.
+
+**Result:** your debt to the supplier goes down first; the rest comes back into the register.
 
 ---
 
@@ -253,35 +371,52 @@ _Owner only. Menu: **Xarid → Postavshikka vozvrat**._
 
 _Menu: **Ombor → Transferlar**. Owner and employee._
 
-Moves goods from one location to another, for example from the main warehouse to the shop floor. Money and costs are not affected.
+Moves goods between places, e.g. warehouse → shop floor. Money doesn't change.
 
-1. **Yangi ko'chirish**.
-2. **Qayerdan** (from) and **Qayerga** (to). They must differ (_Bir xil joy tanlangan_).
-3. Add products and **Blok** / **Dona**.
-4. **Saqlash** to keep a draft, or **Bajarish** to move the goods now. If the source doesn't hold enough, the line says how much it does hold.
+![Transfers list](images/user-guide/transfers.png)
 
-**Made a mistake?** Open the executed transfer and click **Teskari ko'chirish** (reverse transfer). A new draft opens with the same lines and the two locations swapped; execute it.
+![New transfer](images/user-guide/transfer-new.png)
+
+1. **Yangi transfer**.
+2. **Qayerdan** (from) and **Qayerga** (to). They must differ.
+3. Add products, **Blok** / **Dona**.
+4. **Bajarish** (or **Saqlash** for later).
+
+**Made a mistake?** Open the executed transfer:
+
+![Executed transfer](images/user-guide/transfer-executed.png)
+
+Click **Teskari transfer**: a new draft with the places swapped. Execute it.
 
 ---
 
 ## 10. Inventory count
 
-_Menu: **Ombor → Inventarizatsiya**. The employee counts, the owner reviews and executes._
+_Menu: **Ombor → Inventarizatsiya**. Employee counts, owner executes._
 
 ### Employee: count
 
-1. **Yangi inventarizatsiya**, then choose the **Joy** you are counting.
-2. Add the products you count: scan or search them one by one (a partial count), or click **Joydagi barcha mahsulotlarni qo'shish** to list everything at that location (a full count).
-3. Type what you physically see as **Blok** / **Dona** in **Sanalgan** (counted). You don't see what the system expects, so count honestly.
-4. **Saqlash** as often as you like during a long count.
+![Count as the employee sees it](images/user-guide/count-employee.png)
+
+1. **Yangi inventarizatsiya**, pick **Joy**.
+2. Add products one by one, or **Joydagi barcha mahsulotlarni qo'shish** for everything there.
+3. Type what you **see** as **Blok** / **Dona**. You don't see the expected number, so count honestly.
+4. **Saqlash** as often as you like.
 
 ### Owner: review and execute
 
-1. Open the draft (home inbox or the **Inventarizatsiya** badge).
-2. Each line shows **Kutilgan** (expected), **Sanalgan** (counted), **Farq** (difference) and **Farq summasi** (difference valued at average cost), marked as **Kamomad** (shortage) or **Ortiqcha** (surplus).
-3. **Bajarish**. The stock of each listed product is set to the counted quantity. Products not in the count keep their stock.
+![Count as the owner sees it](images/user-guide/count-owner.png)
 
-"Expected" is recalculated at the moment you execute, so sales made while the employee was counting don't show up as false shortages. Shortages appear as a loss and surpluses as a gain in **Foyda va zarar**.
+| Column | Meaning |
+| --- | --- |
+| **Sanalgan** | counted |
+| **Kutilgan** | what the system expected |
+| **Farq** | difference (red = missing) |
+| **Farq summasi** | difference in money, at average cost |
+
+Click **Bajarish**.
+
+**Result:** stock of each listed product = counted. Unlisted products don't change. Shortage = loss, surplus = gain in **Foyda va zarar**. "Expected" is recalculated at execution, so sales during the count don't show as false shortages.
 
 ---
 
@@ -289,30 +424,41 @@ _Menu: **Ombor → Inventarizatsiya**. The employee counts, the owner reviews an
 
 _Menu: **Moliya → Kassa**._
 
-The cash register is the list of every money movement in the store. Sales, purchases, returns, debt payments and loans add their operations automatically. Here you record the rest.
+![Cash register](images/user-guide/cash.png)
 
-- **Owner** sees the balance strip at the top, **Naqd | Karta | Bank o'tkazmasi | Jami**, and the full list. **Employees** see the list without the balances.
-- Filter by **Dan** / **Gacha**, **Turi** (type), **To'lov usuli**, **Muallif** (who recorded it) and **Kontragent**.
+- Every money movement in the store. Sales, purchases, debts and loans add theirs automatically.
+- The balance strip on top (**Naqd | Karta | Bank o'tkazmasi | Jami**) shows to the owner only.
 
-**Record money in: Kirim.** Pick **Kirim turi**: _Mijoz qarzi to'lovi_ (a customer pays their debt, see section 7) or, for the owner, the income category _Olingan foiz_ (interest received). Then enter **Summa**, **To'lov usuli** and an optional **Izoh**, and click **Saqlash**.
+### Money in: Kirim
 
-**Record money out: Chiqim.** Pick **Xarajat turi** (expense category):
+1. **Kirim**.
+2. Pick the type: _Mijoz qarzi to'lovi_ (customer pays debt) or, owner only, _Olingan foiz_ (interest received).
+3. **Summa**, **To'lov usuli**, optional **Izoh**, **Saqlash**.
 
-| Xarajat turi | Meaning | Counts in net profit | Employee may use |
+### Money out: Chiqim
+
+![Money out dialog](images/user-guide/cash-out.png)
+
+1. **Chiqim**.
+2. Pick **Xarajat turi** (expense type, table below).
+3. **Summa**, **To'lov usuli**, **Izoh**, **Saqlash**.
+
+| Xarajat turi | Meaning | In profit | Employee may use |
 | --- | --- | --- | --- |
 | Transport xarajati | delivery, fuel | yes | yes |
 | Ijara | rent | yes | yes |
 | Ish haqi | salaries | yes | yes |
 | Kommunal | utilities | yes | yes |
 | Soliq | taxes | yes | yes |
-| Boshqa | other; **a note is required** | yes | yes |
-| Qarz foizi | interest you paid on a loan | yes | no |
-| Egasi olgan pul | money the owner takes for themselves | **no** | no |
-| _Yetkazib beruvchiga to'lov_ | not a category: paying a supplier's debt (section 7) | no | no |
+| Boshqa | other (**note required**) | yes | yes |
+| Qarz foizi | loan interest you paid | yes | no |
+| Egasi olgan pul | owner takes money for themselves | **no** | no |
 
-Then enter **Summa**, **To'lov usuli** and **Izoh**. You can't take out more than the register holds in that method.
+You can't take out more than the register holds in that method.
 
-Saving asks for confirmation, because **cash operations are permanent**. To correct one, the owner clicks **Tuzatish** on its row. A **Teskari operatsiya** (opposite operation) with the same amount is recorded, cancelling it out. Each operation can be corrected once.
+### Fix a mistake: Tuzatish
+
+Owner only. **Tuzatish** on the row records the opposite operation. Each operation can be fixed once.
 
 ---
 
@@ -320,79 +466,102 @@ Saving asks for confirmation, because **cash operations are permanent**. To corr
 
 _Owner only. Menu: **Moliya → Qarzlar**._
 
-Use loans for money lent or borrowed outside sales and purchases, for example a loan from a relative or to a neighbouring shop.
+Money lent or borrowed outside sales, e.g. from a relative.
 
-**Create a loan:** **Yangi qarz**, then **Turi** (**Berilgan** = you lent, **Olingan** = you borrowed), **Kontragent**, **Asosiy summa** (principal), **To'lov usuli**, optional **Qaytarish muddati** (due date) and note. On saving, the principal leaves the register (lent) or enters it (borrowed).
+![Loans list](images/user-guide/loans.png)
 
-The list shows **Asosiy** (principal), **Qaytarilgan** (repaid), **Qoldiq** (outstanding) and **Muddat**. An overdue loan is shown in red. Click a loan to open its card, where you can:
+**Create a loan:**
 
-- **Qaytarish**: record a repayment, partial or full, up to the outstanding balance. Money comes back into the register for a loan you gave, and leaves it for a loan you took.
-- **Foiz to'lash** / **Foiz olish**: record interest paid or received. It is booked as _Qarz foizi_ (expense) or _Olingan foiz_ (income).
+1. **Yangi qarz**.
+2. **Turi**: **Berilgan** (you lent) or **Olingan** (you borrowed).
+3. **Kontragent**, **Asosiy summa** (principal), **To'lov usuli**.
+4. Optional **Qaytarish muddati** (due date) and note. Save.
 
-The loan amount itself is never profit or loss; only interest is. Loans appear next to net profit in **Foyda va zarar** and in **Balans**.
+**Result:** the money leaves the register (lent) or enters it (borrowed). Overdue loans show in red.
+
+**On the loan card:**
+
+![Loan card](images/user-guide/loan-card.png)
+
+- **Qaytarish**: a repayment, up to what's still owed.
+- **Foiz to'lash** / **Foiz olish**: interest paid or received.
+
+The loan amount is never profit or loss. Only interest is.
 
 ---
 
 ## 13. Reports
 
-_Menu: **Hisobotlar** (and **Ombor → Qoldiqlar** for stock)._
+_Menu: **Hisobotlar**, and **Ombor → Qoldiqlar** for stock._
 
-### Qoldiqlar (stock), owner and employee
+### Qoldiqlar (stock): owner and employee
 
-Current stock of each product in blocks + pieces. Filter by **Joy** (choosing a warehouse includes its sub-warehouses) or search a product. The owner also sees **O'rtacha tannarx** (average cost) and **Qiymati** (stock value).
+![Stock page](images/user-guide/stock.png)
 
-### Sotuvlar hisoboti (sales report), owner and employee
+- **Qoldiq**: pieces first, blocks under in grey.
+- Tabs by level: **Kam qolgan** (1–10 dona), **O'rtacha** (11–50, yellow), **Tugagan** (0, red). Green = **Yetarli**.
+- Filter by **Ombor**. A warehouse includes its sub-warehouses.
+- Owner also sees **O'rtacha tannarx** and **Qoldiq qiymati**, with the total at the bottom.
 
-For a date range: **Tushum** (revenue, with returns subtracted), **Sotuvlar soni** (number of sales), sales by product, **Xodimlar bo'yicha** (by employee), and each sale with **To'langan** (paid) vs **Qarz** (on debt). The owner also sees **Tannarx** (cost) and **Yalpi foyda** (gross profit); employees see the report without them.
+### Sotuvlar (sales): owner and employee
 
-### Foyda va zarar (profit and loss), owner
+![Sales report](images/user-guide/report-sales.png)
 
-For a date range, line by line:
+Revenue (returns subtracted), number of sales, by product, by employee, paid vs debt. Cost and gross profit: owner only.
+
+### Foyda va zarar (profit and loss): owner
+
+![Profit and loss](images/user-guide/report-pnl.png)
 
 ```
-  Tushum                         revenue
-− Sotilgan tovar tannarxi        cost of goods sold (at average cost)
-= Yalpi foyda                    gross profit
-− Xarajatlar                     each expense category that counts in profit, incl. Umidsiz qarz
-− Kamomad                        inventory shortages
-+ Ortiqcha                       inventory surpluses
-− Qarz foizi / + Olingan foiz    loan interest
-= Sof foyda                      net profit
+  Tushum                      revenue
+− Sotilgan tovar tannarxi     cost of goods sold
+= Yalpi foyda                 gross profit
+− Xarajatlar                  expenses that count in profit
+− Kamomad  + Ortiqcha         count shortages and surpluses
+± Qarz foizi / Olingan foiz   loan interest
+= Sof foyda                   net profit
 ```
 
-Not included: payments to suppliers, debt payments, loan principal and repayments, _Egasi olgan pul_ and the opening balance. These are money movements, not profit or loss. Next to net profit the report shows **Kassada hozir** (cash now) and loans **Berilgan** / **Olingan**, so you see net profit and position together.
+Not included: supplier payments, debt payments, loan principal, _Egasi olgan pul_, opening balance. Cash now and loans show next to net profit.
 
-### Pul oqimi (cash flow), owner
+### Pul oqimi (cash flow): owner
 
-Every cash operation in a period, totalled as **Kirim** (in), **Chiqim** (out) and **Qoldiq** (net), grouped **Turi bo'yicha** (by type and category) and **Kunlar bo'yicha** (by day). Click a day to open the Kassa list filtered to that day.
+![Cash flow](images/user-guide/report-cash-flow.png)
 
-### Balans, owner
+Money in, out and net, by type and by day. Click a day to open Kassa for that day.
 
-The store's position right now: cash per payment method and in total; **Berilgan qarzlar** / **Olingan qarzlar** (loans outstanding); **Mijozlar qarzi** (what customers owe you); **Yetkazib beruvchilarga qarz** (what you owe suppliers).
+### Balans: owner
+
+![Balance](images/user-guide/report-balance.png)
+
+Right now: cash per method, loans given and taken, what customers owe you, what you owe suppliers.
 
 ---
 
-## 14. Account settings and the super-admin
+## 14. Settings and super-admin
 
 ### Your account
 
-Click your name at the bottom of the menu, then go to the settings:
+Click your name at the bottom of the menu.
 
-- **Profil**: your name and phone.
-- **Xavfsizlik**: change your password (**Parolni yangilash**) and, optionally, turn on two-factor authentication or add a passkey.
+![Profile settings](images/user-guide/settings.png)
+
+- **Profil**: name and phone.
+- **Xavfsizlik**: change password; optional two-factor login or passkey.
 - **Ko'rinish**: light or dark theme.
 
 ### Super-admin
 
-The super-admin runs the platform, not a store. They are created only from the server's command line:
+Runs the platform, not a store. Created only on the server:
 
 ```bash
 php artisan app:create-super-admin --name="Admin" --phone="+998901234567" --password="secret-password"
 ```
 
-After logging in they see **Platforma → Do'konlar**, a list of every store with its owner, phone and status (**Faol** / **Bloklangan**). From there they can:
+Menu: **Platforma → Do'konlar**.
 
-- **Bloklash** / **Blokdan chiqarish**: block or unblock a store. The store's users are logged out and can't log in while it is blocked, and nothing is deleted.
-- **Egasining parolini tiklash**: set a new password for a store owner who is locked out.
+- **Bloklash** / **Blokdan chiqarish**: block or unblock a store. Its users are logged out. Nothing is deleted.
+- **Egasining parolini tiklash**: new password for a locked-out owner.
 
 The super-admin can't open any store's products, documents, cash or reports.

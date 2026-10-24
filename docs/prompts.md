@@ -1691,3 +1691,59 @@ prompts should be merged.
 ```text
 push changes we did together in this conversation. split into different tasks because most of them are different
 ```
+
+### 125. 2026-10-24 05:21
+
+```text
+@docs/architecture.md rewrite it using /i-have-adhd:i-have-adhd cuz i can not understand it.
+
+@docs/user-guide.md rewrite it using images. explain to clients without images is non-sense cuz i even dont understand without screenshots of platform. for explanation, use /i-have-adhd:i-have-adhd cuz i want to read it myself . now it is impossible to read for me.
+```
+
+### 126. 2026-10-24 05:37
+
+```text
+1. productlarni qo'shgandan so'ng, yangi productlar har kuni kelishi mumkin, men har doim purchases ga kirib, tovar qo'shishga majbur bo'lyapman. http://localhost:8000/products yoki http://localhost:8000/stock sahifasida "штук" qo'shish imkoni bo'lsa, zo'r bo'lardi. tovar tannarxi va sotilish narxi, jami narxi, yangi "штук" soni, modalda ko'rinib turishi kerak. tovar tannarxi va sotilish narxida eski narxlarni recommend qilishi kerak.
+bu jarayon avtomatik ravishda /purchases sahifasiga ham tushadi. /products yoki /stock sahifasida qilishni o'zing tanlashing kerak. lekin menimcha bu amal /stock sahifasida qilinishi kerak.
+2.
+```
+
+### 127. 2026-10-24 05:38
+
+```text
+1. productlarni qo'shgandan so'ng, yangi productlar har kuni kelishi mumkin, men har doim purchases ga kirib, tovar qo'shishga majbur bo'lyapman. http://localhost:8000/products yoki http://localhost:8000/stock sahifasida "штук" qo'shish imkoni bo'lsa, zo'r bo'lardi. tovar tannarxi va sotilish narxi, jami narxi, yangi "штук" soni, modalda ko'rinib turishi kerak. tovar tannarxi va sotilish narxida eski narxlarni recommend qilishi kerak.
+bu jarayon avtomatik ravishda /purchases sahifasiga ham tushadi. /products yoki /stock sahifasida qilishni o'zing tanlashing kerak. lekin menimcha bu amal /stock sahifasida qilinishi kerak.
+2. /dashboard sahifasiga Yalpi savdo (background: yashil rang), yalpi daromad
+```
+
+### 128. 2026-10-24 05:40
+
+```text
+1. productlarni qo'shgandan so'ng, yangi productlar har kuni kelishi mumkin, men har doim purchases ga kirib, tovar qo'shishga majbur bo'lyapman. http://localhost:8000/products yoki http://localhost:8000/stock sahifasida "штук" qo'shish imkoni bo'lsa, zo'r bo'lardi. tovar tannarxi va sotilish narxi, jami narxi, yangi "штук" soni, modalda ko'rinib turishi kerak. tovar tannarxi va sotilish narxida eski narxlarni recommend qilishi kerak.
+bu jarayon avtomatik ravishda /purchases sahifasiga ham tushadi. /products yoki /stock sahifasida qilishni o'zing tanlashing kerak. lekin menimcha bu amal /stock sahifasida qilinishi kerak.
+2. /dashboard sahifasiga Yalpi savdo (background: yashil rang), yalpi daromad (sariq rang), kirim (ko'k rang), xarajat (pushti rang), debit (qizil rang), kredit(och mallarang), sotilgan mahsulotlar soni (to'q yashil) bloklarini qo'shishimiz kerak. filter ham qo'yishimiz kerak. kunlik, haftalik, oylik, yillik va maxsus (date range tanlanadi bu jarayonda).
+```
+
+### 129. 2026-10-24 05:41
+
+```text
++yes, fix these two.
+```
+
+### 130. 2026-10-24 05:51
+
+```text
+stock sahifasida + qildim va tovar qo'shdim. 480_000 UZS bo'ldi jami narx. 400_000 to'ladim, qolgaini qarz qildim. lekin http://localhost:8000/loans da ko'rinmayapti bu 80_000 qarz. http://localhost:8000/supplier-debts da turibdi.
+```
+
+### 131. 2026-10-24 05:53
+
+```text
+<task-notification>
+<task-id>b3r78fv4m</task-id>
+<tool-use-id>toolu_01UnY3ATgrUoppnBG7Bz747U</tool-use-id>
+<output-file>/tmp/claude-1000/-home-usmonov-projects-mini-erp/d3faea2e-a70b-4fdd-989e-d289d4a1043d/tasks/b3r78fv4m.output</output-file>
+<status>completed</status>
+<summary>Background command "Recapture all screenshots with fixes" completed (exit code 0)</summary>
+</task-notification>
+```
