@@ -31,12 +31,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { usePermissions } from '@/hooks/use-permissions';
-import {
-    formatBlockPrice,
-    formatMoney,
-    formatQuantity,
-    splitQuantity,
-} from '@/lib/format';
+import { formatBlockPrice, formatMoney, splitQuantity } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { create } from '@/routes/sales';
 import type {
@@ -709,11 +704,7 @@ function ProductPanel({
                                     : "Narx yo'q"}
                             </span>
                             <span className="text-xs text-muted-foreground">
-                                Qoldiq:{' '}
-                                {formatQuantity(
-                                    available,
-                                    piecesPerBlock(product.id),
-                                )}
+                                Qoldiq: {available} dona
                             </span>
                             {line && (
                                 <span className="absolute top-2 right-2 rounded-full bg-primary px-2 text-xs text-primary-foreground tabular-nums">
@@ -870,7 +861,7 @@ function CartLine({
                         quantity > stock && 'font-medium text-red-600',
                     )}
                 >
-                    Qoldiq: {formatQuantity(stock, perBlock)}
+                    Qoldiq: {stock} dona
                 </span>
                 {formatBlockPrice(line.price, perBlock) && (
                     <span className="text-muted-foreground">

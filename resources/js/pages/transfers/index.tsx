@@ -38,7 +38,7 @@ export default function TransfersIndex({
         <Button asChild>
             <Link href={create()}>
                 <Plus />
-                Yangi ko'chirish
+                Yangi transfer
             </Link>
         </Button>
     );
@@ -49,7 +49,7 @@ export default function TransfersIndex({
             <div className="flex flex-1 flex-col gap-6 p-4">
                 <ListPageHeader
                     title="Transferlar"
-                    description="Tovarlarni bir joydan boshqasiga ko'chirish. Pul va tannarxga ta'sir qilmaydi."
+                    description="Tovarlarni bir joydan boshqasiga o'tkazish. Pul va tannarxga ta'sir qilmaydi."
                     action={newTransfer}
                 />
 
@@ -67,7 +67,7 @@ export default function TransfersIndex({
                         />
                     ) : (
                         <EmptyState
-                            message="Hali ko'chirish yo'q"
+                            message="Hali transfer yo'q"
                             action={newTransfer}
                         />
                     )

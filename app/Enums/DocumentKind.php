@@ -25,7 +25,7 @@ enum DocumentKind: string
             self::SalesReturn => 'Qaytarish',
             self::Purchase => 'Xarid',
             self::SupplierReturn => 'Yetkazib beruvchiga qaytarish',
-            self::Transfer => "Ko'chirish",
+            self::Transfer => 'Transfer',
             self::InventoryCount => 'Inventarizatsiya',
             self::OpeningBalance => "Boshlang'ich qoldiq",
         };

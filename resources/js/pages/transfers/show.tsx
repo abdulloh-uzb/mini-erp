@@ -53,9 +53,7 @@ export default function TransferShow({
     products,
     stock,
 }: Props) {
-    const title = document
-        ? `Ko'chirish №${document.number}`
-        : "Yangi ko'chirish";
+    const title = document ? `Transfer №${document.number}` : 'Yangi transfer';
 
     return (
         <>
@@ -64,7 +62,7 @@ export default function TransferShow({
                 <div className="flex items-start justify-between gap-4">
                     <Heading
                         title={title}
-                        description="Tovarlarni bir joydan boshqasiga ko'chirish. Pul va tannarxga ta'sir qilmaydi."
+                        description="Tovarlarni bir joydan boshqasiga o'tkazish. Pul va tannarxga ta'sir qilmaydi."
                     />
                     {document && (
                         <DocumentStatusBadge status={document.status} />
@@ -111,7 +109,7 @@ function ReadOnlyTransfer({ document }: { document: DocumentData }) {
                             href={create({ query: { reverse: document.id } })}
                         >
                             <Undo2 />
-                            Teskari ko'chirish
+                            Teskari transfer
                         </Link>
                     </Button>
                 </div>

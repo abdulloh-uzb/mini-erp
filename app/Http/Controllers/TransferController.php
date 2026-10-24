@@ -23,7 +23,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * Transfers (Ko'chirishlar): employees and the owner move pieces from one location to another,
+ * Transfers (Transferlar): employees and the owner move pieces from one location to another,
  * with no money or cost effect. An executed transfer is undone by a reverse transfer, a new
  * form with the locations swapped.
  */
@@ -180,7 +180,7 @@ class TransferController extends Controller
             return to_route('transfers.show', $transfer)->withErrors($exception->errors());
         }
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => __("Ko'chirish №:number bajarildi.", ['number' => $transfer->number])]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Transfer №:number bajarildi.', ['number' => $transfer->number])]);
 
         return to_route('transfers.show', $transfer);
     }

@@ -186,7 +186,7 @@ function EmployeeHome({ employee }: { employee: Employee }) {
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {[
                     { label: 'Yangi sotuv', href: newSale() },
-                    { label: "Yangi ko'chirish", href: newTransfer() },
+                    { label: 'Yangi transfer', href: newTransfer() },
                     { label: "Qarz to'lovi", href: customerDebts() },
                     { label: 'Xarajat', href: cash() },
                 ].map((action) => (
