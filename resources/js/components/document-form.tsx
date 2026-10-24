@@ -85,8 +85,10 @@ export function DocumentAudit({ document }: { document: DocumentData }) {
 }
 
 /**
- * Finds a product by name or barcode. Enter (or a scanner, which types and presses Enter)
- * picks an exact barcode match, else the first match; the box keeps focus for the next scan.
+ * Finds a product by name or barcode. Clicking the empty box lists every product; typing
+ * narrows the list. Arrow keys move the highlight; Enter (or a scanner, which types and
+ * presses Enter) picks an exact barcode match, else the highlighted product. The box keeps
+ * focus for the next scan.
  */
 export function ProductSearch({
     products,
@@ -96,26 +98,42 @@ export function ProductSearch({
     onPick: (product: PickerProduct) => void;
 }) {
     const [query, setQuery] = useState('');
+    const [isOpen, setIsOpen] = useState(false);
+    const [highlighted, setHighlighted] = useState(0);
     const inputRef = useRef<HTMLInputElement>(null);
+    const listRef = useRef<HTMLUListElement>(null);
     const term = query.trim().toLowerCase();
 
-    const matches = useMemo(() => {
-        if (term === '') {
-            return [];
-        }
+    const matches = useMemo(
+        () =>
+            term === ''
+                ? products
+                : products.filter(
+                      (product) =>
+                          product.name.toLowerCase().includes(term) ||
+                          product.barcode?.includes(term),
+                  ),
+        [products, term],
+    );
 
-        return products
-            .filter(
-                (product) =>
-                    product.name.toLowerCase().includes(term) ||
-                    product.barcode?.includes(term),
-            )
-            .slice(0, 8);
-    }, [products, term]);
+    const open = () => {
+        setIsOpen(true);
+        setHighlighted(0);
+    };
+
+    const moveHighlight = (step: number) => {
+        const next = Math.min(
+            Math.max(highlighted + step, 0),
+            matches.length - 1,
+        );
+        setHighlighted(next);
+        listRef.current?.children[next]?.scrollIntoView({ block: 'nearest' });
+    };
 
     const pick = (product: PickerProduct) => {
         onPick(product);
         setQuery('');
+        setIsOpen(false);
         inputRef.current?.focus();
     };
 
@@ -125,8 +143,32 @@ export function ProductSearch({
             <Input
                 ref={inputRef}
                 value={query}
-                onChange={(event) => setQuery(event.target.value)}
+                onChange={(event) => {
+                    setQuery(event.target.value);
+                    open();
+                }}
+                onFocus={open}
+                onClick={() => !isOpen && open()}
+                onBlur={() => setIsOpen(false)}
                 onKeyDown={(event) => {
+                    if (event.key === 'Escape') {
+                        setIsOpen(false);
+
+                        return;
+                    }
+
+                    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+                        event.preventDefault();
+
+                        if (isOpen) {
+                            moveHighlight(event.key === 'ArrowDown' ? 1 : -1);
+                        } else {
+                            open();
+                        }
+
+                        return;
+                    }
+
                     if (event.key !== 'Enter') {
                         return;
                     }
@@ -135,7 +177,7 @@ export function ProductSearch({
                     const product =
                         products.find(
                             (item) => item.barcode === query.trim(),
-                        ) ?? matches[0];
+                        ) ?? (isOpen ? matches[highlighted] : undefined);
 
                     if (product) {
                         pick(product);
@@ -143,25 +185,49 @@ export function ProductSearch({
                 }}
                 placeholder="Mahsulot nomi yoki shtrix-kod"
                 aria-label="Mahsulot qidirish"
+                aria-expanded={isOpen}
+                role="combobox"
                 className="pl-9"
                 autoComplete="off"
             />
-            {matches.length > 0 && (
-                <ul className="absolute z-20 mt-1 w-full overflow-hidden rounded-md border bg-popover shadow-md">
-                    {matches.map((product) => (
-                        <li key={product.id}>
-                            <button
-                                type="button"
-                                className="flex w-full justify-between px-3 py-2 text-left text-sm hover:bg-accent"
-                                onClick={() => pick(product)}
-                            >
-                                <span>{product.name}</span>
-                                <span className="text-muted-foreground">
-                                    1 blok = {product.pieces_per_block} dona
-                                </span>
-                            </button>
+            {isOpen && (
+                <ul
+                    ref={listRef}
+                    role="listbox"
+                    className="absolute z-20 mt-1 max-h-72 w-full overflow-y-auto rounded-md border bg-popover shadow-md"
+                >
+                    {matches.length === 0 ? (
+                        <li className="px-3 py-2 text-sm text-muted-foreground">
+                            Mahsulot topilmadi
                         </li>
-                    ))}
+                    ) : (
+                        matches.map((product, index) => (
+                            <li
+                                key={product.id}
+                                role="option"
+                                aria-selected={index === highlighted}
+                            >
+                                <button
+                                    type="button"
+                                    tabIndex={-1}
+                                    className={cn(
+                                        'flex w-full justify-between gap-3 px-3 py-2 text-left text-sm hover:bg-accent',
+                                        index === highlighted && 'bg-accent',
+                                    )}
+                                    onMouseDown={(event) =>
+                                        event.preventDefault()
+                                    }
+                                    onMouseEnter={() => setHighlighted(index)}
+                                    onClick={() => pick(product)}
+                                >
+                                    <span>{product.name}</span>
+                                    <span className="shrink-0 text-muted-foreground">
+                                        1 blok = {product.pieces_per_block} dona
+                                    </span>
+                                </button>
+                            </li>
+                        ))
+                    )}
                 </ul>
             )}
         </div>
