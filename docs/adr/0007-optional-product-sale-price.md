@@ -1,0 +1,3 @@
+# Products carry an optional sale price
+
+Supersedes [ADR-0004](0004-no-stored-sale-price.md). A product may carry a sale price per piece, set on the product card. A new sale line pre-fills from it; a product without one falls back to the previous sale price, and a product with neither starts empty. The owner asked for it: most products sell at a steady price, and typing or trusting the last sale for each one was slower than setting it once, as BILLZ, BITO and MoySklad do. Purchases keep pre-filling from the previous purchase price only. The average-cost warning on sale lines stays, so a wrong stored price is still caught.

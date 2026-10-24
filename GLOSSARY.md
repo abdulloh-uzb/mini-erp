@@ -87,8 +87,12 @@ _Avoid_: Write-off, loss
 **Surplus** (_ortiqcha_):
 Pieces an inventory count found beyond what the system expected. A gain in P&L.
 
+**Sale price** (_sotuv narxi_):
+The optional price per piece set on a product. It pre-fills new sale lines ahead of the previous price.
+_Avoid_: Default price, list price
+
 **Previous price**:
-The price used for the same product on the store's last executed document of the same kind; it pre-fills a new line.
+The price used for the same product on the store's last executed document of the same kind; it pre-fills a new line when the product has no sale price (sales) or always (purchases).
 _Avoid_: Default price, list price
 
 ## Money

@@ -184,7 +184,7 @@ _Menu: **Savdo → Sotuv** (or **Yangi sotuv** on the home page). Owner and empl
 The sale screen is built for speed. Product tiles and a search box sit on the left, and the current sale (the cart) is on the right.
 
 1. **Add products.** The cursor starts in the search box. Scan a barcode, or type a name and press **Enter**: each scan adds **+1 dona** and joins an existing line for the same product. Clicking a tile does the same. To sell whole blocks, press **Tab** to reach **Blok** on the line and type the number, or use the line's +/− buttons.
-2. **Check prices.** **Narx/dona** is pre-filled with the last sale price of that product. A product never sold before shows _Narx yo'q_ and must be priced. Owners also see the average cost; when the price is below it the line warns _Narx o'rtacha tannarxdan past_.
+2. **Check prices.** **Narx/dona** is pre-filled with the product's **Sotuv narxi** (set on the product card), or the last sale price when it has none. A product with neither shows _Narx yo'q_ and must be priced. Owners also see the average cost; when the price is below it the line warns _Narx o'rtacha tannarxdan past_.
 3. **Check stock.** Each line shows what is left at the chosen location, for example _Qoldiq: 10 blok + 4 dona_. The **Joy** (location) is remembered from your last sale.
 4. **Payment.** **Jami** is the total. Choose a method (**Naqd**, **Karta**, **Bank o'tkazmasi**) and type the amount. **Qolganini** puts the remaining amount on the chosen method, and **To'liq naqd** puts the whole total on cash. You can mix methods.
    - **Qarzga qoladi** shows live what will stay unpaid as the customer's debt.

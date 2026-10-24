@@ -30,6 +30,7 @@ class SaveProductRequest extends FormRequest
                     ->ignore($product),
             ],
             'pieces_per_block' => ['required', 'integer', 'min:1', 'max:10000'],
+            'sale_price' => ['nullable', 'numeric', 'decimal:0,2', 'min:0', 'max:9999999999999999'],
         ];
     }
 
@@ -44,6 +45,7 @@ class SaveProductRequest extends FormRequest
             'name' => 'nomi',
             'barcode' => 'shtrix-kod',
             'pieces_per_block' => 'blokdagi dona soni',
+            'sale_price' => 'sotuv narxi',
         ];
     }
 }

@@ -126,6 +126,22 @@ describe('create', function () {
         expect(Product::withoutGlobalScopes()->count())->toBe(0);
     });
 
+    test('the owner gives a product a sale price per piece', function () {
+        $owner = User::factory()->create();
+
+        $this->actingAs($owner)->post(route('products.store'), productInput(['sale_price' => '13000']));
+
+        expect(Product::query()->sole()->sale_price)->toBe('13000.00');
+    });
+
+    test('a sale price cannot be negative or have more than two decimals', function (string $salePrice) {
+        $owner = User::factory()->create();
+
+        $response = $this->actingAs($owner)->post(route('products.store'), productInput(['sale_price' => $salePrice]));
+
+        $response->assertSessionHasErrors('sale_price');
+    })->with(['negative' => '-1', 'three decimals' => '10.123']);
+
     test('pieces per block must be at least one', function () {
         $owner = User::factory()->create();
 
@@ -178,6 +194,15 @@ describe('update', function () {
             ->name->toBe('Coca-Cola 2 L')
             ->barcode->toBe('4780000000017')
             ->pieces_per_block->toBe(4);
+    });
+
+    test('clearing the sale price removes it', function () {
+        $owner = User::factory()->create();
+        $product = Product::factory()->for($owner->team)->create(['sale_price' => '13000']);
+
+        $this->actingAs($owner)->put(route('products.update', $product), productInput(['sale_price' => '']));
+
+        expect($product->fresh()->sale_price)->toBeNull();
     });
 
     test('a product cannot take another product\'s barcode', function () {

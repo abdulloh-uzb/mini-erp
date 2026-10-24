@@ -27,6 +27,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { usePermissions } from '@/hooks/use-permissions';
+import { formatMoney } from '@/lib/format';
 import { index } from '@/routes/products';
 import type { Paginated } from '@/types';
 
@@ -35,6 +36,8 @@ type Product = {
     name: string;
     barcode: string | null;
     pieces_per_block: number;
+    /** Per piece; pre-fills new sale lines. */
+    sale_price: string | null;
     archived: boolean;
 };
 
@@ -108,6 +111,7 @@ export default function ProductsIndex({ products, filters }: Props) {
                                 'Nomi',
                                 'Shtrix-kod',
                                 'Blokdagi dona',
+                                <div className="text-right">Sotuv narxi</div>,
                                 canManage ? '' : null,
                             ].filter((column) => column !== null)}
                         >
@@ -151,6 +155,16 @@ function ProductRow({
             </td>
             <td className="px-4 py-3 tabular-nums">
                 {product.pieces_per_block}
+            </td>
+            <td className="px-4 py-3 text-right tabular-nums">
+                {product.sale_price !== null ? (
+                    <>
+                        {formatMoney(product.sale_price)}
+                        <span className="text-muted-foreground"> / dona</span>
+                    </>
+                ) : (
+                    <span className="text-muted-foreground">—</span>
+                )}
             </td>
             {canManage && (
                 <td className="px-4 py-3">
@@ -261,6 +275,26 @@ function ProductDialog({ product }: { product?: Product }) {
                                     required
                                 />
                                 <InputError message={errors.pieces_per_block} />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor={`${idPrefix}-sale-price`}>
+                                    Sotuv narxi, 1 dona uchun (ixtiyoriy)
+                                </Label>
+                                <Input
+                                    id={`${idPrefix}-sale-price`}
+                                    name="sale_price"
+                                    type="number"
+                                    min={0}
+                                    step="0.01"
+                                    inputMode="decimal"
+                                    defaultValue={product?.sale_price ?? ''}
+                                    placeholder="13000"
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                    Yangi sotuvda narx shu bilan to'ladi. Bo'sh
+                                    qolsa, oxirgi sotuv narxi olinadi.
+                                </p>
+                                <InputError message={errors.sale_price} />
                             </div>
                             <DialogFooter className="gap-2">
                                 <DialogClose asChild>

@@ -9,8 +9,8 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * The previous price (Q18, ADR-0004): for each product, the price on the store's most recently
- * executed document line of the same kind. New lines pre-fill from it; a product never bought
- * or sold has none.
+ * executed document line of the same kind. New lines pre-fill from it (sale lines only when the
+ * product has no sale price, ADR-0007); a product never bought or sold has none.
  */
 class PreviousPrices
 {

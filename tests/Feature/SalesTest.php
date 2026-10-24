@@ -76,9 +76,10 @@ test('an employee executes a sale and gets a fresh screen with its receipt', fun
             ->where('receipt.debt', '0.00'));
 });
 
-test('the screen pre-fills the last sale price and only users who may view costs get average costs', function () {
+test('the screen pre-fills the sale price, else the last sale price, and only users who may view costs get average costs', function () {
     [$owner, $cola, $location] = storeWithStock();
     $water = Product::factory()->for($owner->team)->create();
+    $fanta = Product::factory()->for($owner->team)->create(['sale_price' => '7000']);
     $employee = User::factory()->employeeOf($owner->team)->create();
     foreach (['6000', '6500'] as $price) {
         $this->actingAs($owner)->post(route('sales.store'), saleInput($location, [
@@ -90,11 +91,22 @@ test('the screen pre-fills the last sale price and only users who may view costs
     $this->actingAs($employee)->get(route('sales.create'))
         ->assertInertia(fn (Assert $page) => $page
             ->component('sales/create')
-            ->where('previous_prices', [$cola->id => '6500.00'])
-            ->missing("previous_prices.{$water->id}")
+            ->where('prices', [$fanta->id => '7000.00', $cola->id => '6500.00'])
+            ->missing("prices.{$water->id}")
             ->missing('average_costs'));
     $this->actingAs($owner)->get(route('sales.create'))
         ->assertInertia(fn (Assert $page) => $page->where('average_costs', [$cola->id => '4000.00']));
+});
+
+test("a product's sale price wins over its last sale price", function () {
+    [$owner, $cola, $location] = storeWithStock();
+    $this->actingAs($owner)->post(route('sales.store'), saleInput($location, [
+        ['product_id' => $cola->id, 'pieces' => 1, 'price' => '6000'],
+    ], ['cash' => '6000'], execute: true));
+    $cola->update(['sale_price' => '6800']);
+
+    $this->get(route('sales.create'))
+        ->assertInertia(fn (Assert $page) => $page->where("prices.{$cola->id}", '6800.00'));
 });
 
 test('parking a sale clears the screen and lists it under the drafts, at the location last sold from', function () {

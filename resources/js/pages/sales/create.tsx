@@ -56,8 +56,8 @@ type Props = {
     /** What each customer owes the store, per counterparty id. */
     customer_debts: Record<number, string>;
     methods: EnumOption[];
-    /** The last executed sale price per product id. */
-    previous_prices: Record<number, string>;
+    /** Each product's starting price: its sale price, else its previous sale price. */
+    prices: Record<number, string>;
     /** Other parked sales (Qoralamalar). */
     drafts: ParkedSale[];
     /** Average cost per product id; only for users who may view costs. */
@@ -96,7 +96,7 @@ function SaleScreen({
     customers,
     customer_debts: customerDebts,
     methods,
-    previous_prices: previousPrices,
+    prices: startingPrices,
     drafts,
     average_costs: averageCosts,
 }: Props) {
@@ -115,8 +115,7 @@ function SaleScreen({
     const form = useForm({
         counterparty_id: (document?.counterparty_id ?? null) as number | null,
         location_id: (document?.location_id ?? defaultLocationId ?? '') as
-            | number
-            | '',
+            number | '',
         lines: (document?.lines ?? []).map((line): DraftLine => {
             const split = splitQuantity(line.quantity, line.pieces_per_block);
 
@@ -209,7 +208,7 @@ function SaleScreen({
                     location_id: null,
                     blocks: '',
                     pieces: '1',
-                    price: previousPrices[product.id] ?? '',
+                    price: startingPrices[product.id] ?? '',
                 },
             ]);
         }
@@ -322,7 +321,7 @@ function SaleScreen({
         <div className="grid flex-1 lg:grid-cols-[1fr_26rem]">
             <ProductPanel
                 products={products}
-                previousPrices={previousPrices}
+                startingPrices={startingPrices}
                 lines={form.data.lines}
                 scanRef={scanRef}
                 onTab={() => {
@@ -603,7 +602,7 @@ function SaleScreen({
 
 function ProductPanel({
     products,
-    previousPrices,
+    startingPrices,
     lines,
     scanRef,
     onTab,
@@ -613,7 +612,7 @@ function ProductPanel({
     onPick,
 }: {
     products: PickerProduct[];
-    previousPrices: Record<number, string>;
+    startingPrices: Record<number, string>;
     lines: DraftLine[];
     scanRef: RefObject<HTMLInputElement | null>;
     /** Tab from the scan box: focus the last scanned line's Blok; false when there is none. */
@@ -700,8 +699,8 @@ function ProductPanel({
                                 {product.name}
                             </span>
                             <span className="text-sm tabular-nums">
-                                {previousPrices[product.id]
-                                    ? formatMoney(previousPrices[product.id])
+                                {startingPrices[product.id]
+                                    ? formatMoney(startingPrices[product.id])
                                     : "Narx yo'q"}
                             </span>
                             <span className="text-xs text-muted-foreground">

@@ -31,6 +31,7 @@ class ProductController extends Controller
                 'name' => $product->name,
                 'barcode' => $product->barcode,
                 'pieces_per_block' => $product->pieces_per_block,
+                'sale_price' => $product->sale_price,
                 'archived' => $product->isArchived(),
             ]);
 
@@ -53,7 +54,7 @@ class ProductController extends Controller
     }
 
     /**
-     * Change a product's name, barcode or pieces per block.
+     * Change a product's name, barcode, pieces per block or sale price.
      */
     public function update(SaveProductRequest $request, Product $product): RedirectResponse
     {

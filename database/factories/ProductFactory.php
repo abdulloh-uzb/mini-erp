@@ -23,6 +23,7 @@ class ProductFactory extends Factory
             'name' => fake()->unique()->words(2, true).' 1.5 L',
             'barcode' => fake()->unique()->ean13(),
             'pieces_per_block' => fake()->randomElement([6, 12, 20, 24]),
+            'sale_price' => null,
             'archived_at' => null,
         ];
     }

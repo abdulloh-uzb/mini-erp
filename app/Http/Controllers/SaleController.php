@@ -97,7 +97,8 @@ class SaleController extends Controller
 
     /**
      * Render the sale screen with everything it needs to work without further requests: the
-     * catalogue, stock per location, previous sale prices, customers with their debts, the
+     * catalogue, stock per location, the price each product's new line starts at (its sale price,
+     * else its previous sale price), customers with their debts, the
      * parked sales and the location the user sold from last.
      */
     private function screen(Request $request, ?Document $sale, PreviousPrices $previousPrices, DebtLedger $debts): Response
@@ -120,7 +121,8 @@ class SaleController extends Controller
             'customers' => Counterparty::query()->orderBy('name')->get(['id', 'name', 'phone']),
             'customer_debts' => $debts->balances($user->team_id, DebtSide::Customer),
             'methods' => PaymentMethod::options(),
-            'previous_prices' => $previousPrices->handle($user->team_id, DocumentKind::Sale),
+            'prices' => Product::query()->whereNotNull('sale_price')->pluck('sale_price', 'id')->all()
+                + $previousPrices->handle($user->team_id, DocumentKind::Sale),
             'drafts' => Document::query()->ofKind(DocumentKind::Sale)
                 ->where('status', DocumentStatus::Draft)
                 ->when($sale, fn ($query) => $query->whereKeyNot($sale->id))
