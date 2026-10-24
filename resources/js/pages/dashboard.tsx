@@ -1,6 +1,8 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import Heading from '@/components/heading';
+import { ListTabs } from '@/components/list-page';
 import OpeningBalanceCard from '@/components/opening-balance-card';
+import { ReportPeriodForm } from '@/components/report';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -9,7 +11,13 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
-import { formatDateTime, formatMoney, paymentMethodLabels } from '@/lib/format';
+import {
+    formatDate,
+    formatDateTime,
+    formatMoney,
+    paymentMethodLabels,
+} from '@/lib/format';
+import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import { index as cash } from '@/routes/cash';
 import { index as customerDebts } from '@/routes/customer-debts';
@@ -32,11 +40,16 @@ type PendingDrafts = {
 
 type Owner = {
     pendingDrafts: PendingDrafts;
-    today: {
-        revenue: string;
-        sales_count: number;
+    period: {
+        gross_sales: string;
         gross_profit: string;
-        cash_received: string;
+        cash_in: string;
+        expenses: string;
+        /** What customers owe at the end of the period. */
+        debit: string;
+        /** What the store owes suppliers at the end of the period. */
+        credit: string;
+        pieces_sold: number;
     };
     cashBalances: Record<string, string>;
     debts: {
@@ -59,11 +72,24 @@ type Employee = {
     mySalesToday: { sales_count: number; revenue: string };
 };
 
+type Period = 'day' | 'week' | 'month' | 'year' | 'custom';
+
+type Filters = { period: Period; from: string; to: string };
+
 type Props = {
     openingBalancePending: boolean;
     owner?: Owner;
     employee?: Employee;
+    filters: Filters;
 };
+
+const periodTabs: { period: Period; label: string }[] = [
+    { period: 'day', label: 'Kunlik' },
+    { period: 'week', label: 'Haftalik' },
+    { period: 'month', label: 'Oylik' },
+    { period: 'year', label: 'Yillik' },
+    { period: 'custom', label: 'Maxsus' },
+];
 
 function Figure({ label, value }: { label: string; value: string }) {
     return (
@@ -76,26 +102,109 @@ function Figure({ label, value }: { label: string; value: string }) {
     );
 }
 
-function OwnerHome({ owner }: { owner: Owner }) {
-    const { today, cashBalances, debts, pendingDrafts } = owner;
+/** A period figure on its own background colour. */
+function ColoredFigure({
+    label,
+    value,
+    className,
+}: {
+    label: string;
+    value: string;
+    className: string;
+}) {
+    return (
+        <div className={cn('grid gap-2 rounded-xl p-5 shadow-xs', className)}>
+            <div className="text-sm font-medium opacity-80">{label}</div>
+            <div className="text-2xl font-semibold tabular-nums">{value}</div>
+        </div>
+    );
+}
+
+/**
+ * Kunlik / Haftalik / Oylik / Yillik / Maxsus; Maxsus also shows the Dan–Gacha dates.
+ */
+function PeriodFilter({ filters }: { filters: Filters }) {
+    const periodUrl = (period: Period) =>
+        dashboard.url({
+            query:
+                period === 'custom'
+                    ? { period, from: filters.from, to: filters.to }
+                    : { period },
+        });
+
+    return (
+        <div className="flex flex-wrap items-end gap-3">
+            <ListTabs
+                tabs={periodTabs.map((tab) => ({
+                    label: tab.label,
+                    href: periodUrl(tab.period),
+                    active: filters.period === tab.period,
+                }))}
+            />
+            {filters.period === 'custom' && (
+                <ReportPeriodForm
+                    filters={filters}
+                    url={(range) =>
+                        dashboard.url({
+                            query: { period: 'custom', ...range },
+                        })
+                    }
+                />
+            )}
+        </div>
+    );
+}
+
+function OwnerHome({ owner, filters }: { owner: Owner; filters: Filters }) {
+    const { period, cashBalances, debts, pendingDrafts } = owner;
 
     return (
         <>
             <section className="grid gap-3">
-                <h2 className="font-semibold">Bugun</h2>
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <h2 className="font-semibold">Ko'rsatkichlar</h2>
+                    <span className="text-sm text-muted-foreground">
+                        {filters.from === filters.to
+                            ? formatDate(filters.from)
+                            : `${formatDate(filters.from)} – ${formatDate(filters.to)}`}
+                    </span>
+                </div>
+                <PeriodFilter filters={filters} />
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                    <Figure label="Tushum" value={formatMoney(today.revenue)} />
-                    <Figure
-                        label="Sotuvlar soni"
-                        value={String(today.sales_count)}
+                    <ColoredFigure
+                        label="Yalpi savdo"
+                        value={formatMoney(period.gross_sales)}
+                        className="bg-green-100 text-green-950 dark:bg-green-950 dark:text-green-100"
                     />
-                    <Figure
-                        label="Yalpi foyda"
-                        value={formatMoney(today.gross_profit)}
+                    <ColoredFigure
+                        label="Yalpi daromad"
+                        value={formatMoney(period.gross_profit)}
+                        className="bg-yellow-100 text-yellow-950 dark:bg-yellow-950 dark:text-yellow-100"
                     />
-                    <Figure
-                        label="Kelgan pul"
-                        value={formatMoney(today.cash_received)}
+                    <ColoredFigure
+                        label="Kirim"
+                        value={formatMoney(period.cash_in)}
+                        className="bg-blue-100 text-blue-950 dark:bg-blue-950 dark:text-blue-100"
+                    />
+                    <ColoredFigure
+                        label="Xarajat"
+                        value={formatMoney(period.expenses)}
+                        className="bg-pink-100 text-pink-950 dark:bg-pink-950 dark:text-pink-100"
+                    />
+                    <ColoredFigure
+                        label="Debit (mijozlar qarzi)"
+                        value={formatMoney(period.debit)}
+                        className="bg-red-100 text-red-950 dark:bg-red-950 dark:text-red-100"
+                    />
+                    <ColoredFigure
+                        label="Kredit (yetkazib beruvchilarga qarz)"
+                        value={formatMoney(period.credit)}
+                        className="bg-[#f1e0c5] text-[#4a2f14] dark:bg-[#3b2a17] dark:text-[#f1e0c5]"
+                    />
+                    <ColoredFigure
+                        label="Sotilgan mahsulotlar soni"
+                        value={`${period.pieces_sold} dona`}
+                        className="bg-green-800 text-white dark:bg-green-900"
                     />
                 </div>
             </section>
@@ -250,6 +359,7 @@ export default function Dashboard({
     openingBalancePending,
     owner,
     employee,
+    filters,
 }: Props) {
     const { auth } = usePage().props;
 
@@ -262,7 +372,7 @@ export default function Dashboard({
                     description={auth.store?.name}
                 />
                 {openingBalancePending && <OpeningBalanceCard />}
-                {owner && <OwnerHome owner={owner} />}
+                {owner && <OwnerHome owner={owner} filters={filters} />}
                 {employee && <EmployeeHome employee={employee} />}
             </div>
         </>

@@ -32,7 +32,7 @@ test('the owner home shows pending drafts of owner-executed kinds with their aut
         );
 });
 
-test('the owner home shows today figures, cash per method and debt totals', function () {
+test('the owner home shows the period figures, cash per method and debt totals', function () {
     [$owner, $employee, $location, $cola] = reportStore();
     $customer = Counterparty::factory()->for($owner->team)->create();
     $this->actingAs($owner);
@@ -42,13 +42,56 @@ test('the owner home shows today figures, cash per method and debt totals', func
 
     $this->actingAs($owner)->get(route('dashboard'))
         ->assertInertia(fn (Assert $page) => $page
-            ->where('owner.today', ['revenue' => '48000.00', 'sales_count' => 1, 'gross_profit' => '18000.00', 'cash_received' => '40000.00'])
+            ->where('filters', ['period' => 'day', 'from' => today()->toDateString(), 'to' => today()->toDateString()])
+            ->where('owner.period', [
+                'gross_sales' => '48000.00',
+                'gross_profit' => '18000.00',
+                'cash_in' => '41000.00',
+                'expenses' => '0.00',
+                'debit' => '8000.00',
+                'credit' => '0.00',
+                'pieces_sold' => 6,
+            ])
             ->where('owner.cashBalances', ['cash' => '40000.00', 'card' => '0.00', 'bank_transfer' => '1000.00'])
             ->where('owner.debts.customer', '8000.00')
             ->where('owner.debts.supplier', '0.00')
             ->where('owner.debts.loans_given', '500000.00')
             ->where('owner.debts.loans_received', '0.00'),
         );
+});
+
+test('the owner home period filter picks the days its figures cover', function () {
+    [$owner, $employee, $location, $cola] = reportStore();
+    $customer = Counterparty::factory()->for($owner->team)->create();
+    $this->travelTo('2026-03-10 12:00');
+    executeSaleBy($employee, $location, [[$cola, 6, '8000']], ['cash' => '40000'], $customer);
+    $this->travelTo('2026-03-20 12:00');
+
+    $figures = fn (array $query) => $this->actingAs($owner)->get(route('dashboard', $query))->inertiaProps();
+
+    expect($figures(['period' => 'day']))
+        ->toHaveKey('owner.period.gross_sales', '0.00')
+        ->toHaveKey('owner.period.debit', '8000.00')
+        ->and($figures(['period' => 'week']))
+        ->toHaveKey('filters', ['period' => 'week', 'from' => '2026-03-16', 'to' => '2026-03-20'])
+        ->toHaveKey('owner.period.pieces_sold', 0)
+        ->and($figures(['period' => 'month']))
+        ->toHaveKey('owner.period.gross_sales', '48000.00')
+        ->toHaveKey('owner.period.pieces_sold', 6)
+        ->and($figures(['period' => 'custom', 'from' => '2026-03-01', 'to' => '2026-03-09']))
+        ->toHaveKey('owner.period.gross_sales', '0.00')
+        ->toHaveKey('owner.period.debit', '0.00');
+});
+
+test('a custom period needs both of its days in order', function () {
+    $owner = User::factory()->create();
+
+    $this->actingAs($owner)->from(route('dashboard'))
+        ->get(route('dashboard', ['period' => 'custom', 'from' => '2026-03-09', 'to' => '2026-03-01']))
+        ->assertSessionHasErrors('to');
+    $this->actingAs($owner)->from(route('dashboard'))
+        ->get(route('dashboard', ['period' => 'custom']))
+        ->assertSessionHasErrors(['from', 'to']);
 });
 
 test('the employee home shows only their own drafts and sales today, without costs', function () {

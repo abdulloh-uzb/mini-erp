@@ -49,6 +49,22 @@ class DebtLedger
     }
 
     /**
+     * Get the store's whole debt on one side at the end of the given day ("Y-m-d").
+     *
+     * @return numeric-string
+     */
+    public function totalOn(int $storeId, DebtSide $side, string $date): string
+    {
+        $sum = DebtEntry::withoutGlobalScopes()
+            ->where('team_id', $storeId)
+            ->where('side', $side)
+            ->whereDate('created_at', '<=', $date)
+            ->sum('amount');
+
+        return bcadd((string) $sum, '0', 2);
+    }
+
+    /**
      * Get every non-zero debt on one side of the store, per counterparty id.
      *
      * @return array<int, numeric-string>
