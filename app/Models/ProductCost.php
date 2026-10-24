@@ -12,7 +12,8 @@ use Illuminate\Support\Carbon;
 
 /**
  * A product's moving average cost per piece, store-wide (ADR-0002). Kept apart from the
- * product so that it is locked during execution and never leaks into catalogue screens.
+ * product so that it is locked during execution and reaches catalogue screens only for users
+ * allowed to see costs.
  *
  * @property int $id
  * @property int $team_id

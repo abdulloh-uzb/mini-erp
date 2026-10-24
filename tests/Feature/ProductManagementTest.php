@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Product;
+use App\Models\ProductCost;
 use App\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -70,10 +71,25 @@ describe('index', function () {
     test('an employee sees the product list', function () {
         $owner = User::factory()->create();
         $employee = User::factory()->employeeOf($owner->team)->create();
-        Product::factory()->for($owner->team)->create();
+        $product = Product::factory()->for($owner->team)->create();
+        ProductCost::factory()->for($product)->create();
 
         $this->actingAs($employee)->get(route('products.index'))
-            ->assertInertia(fn (Assert $page) => $page->has('products.data', 1));
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('products.data', 1)
+                ->missing('products.data.0.average_cost'));
+    });
+
+    test('the owner sees each product\'s average cost, none before its first purchase', function () {
+        $owner = User::factory()->create();
+        $cola = Product::factory()->for($owner->team)->create(['name' => 'Coca-Cola 1.5 L']);
+        Product::factory()->for($owner->team)->create(['name' => 'Suv 0.5 L']);
+        ProductCost::factory()->for($cola)->create(['average_cost' => '1571.428571']);
+
+        $this->actingAs($owner)->get(route('products.index'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('products.data.0.average_cost', '1571.43')
+                ->where('products.data.1.average_cost', null));
     });
 });
 

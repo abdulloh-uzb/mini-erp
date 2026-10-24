@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\StorePermission;
 use App\Http\Requests\SaveProductRequest;
 use App\Models\Product;
+use App\Models\ProductCost;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -13,11 +15,13 @@ class ProductController extends Controller
 {
     /**
      * Show the catalogue: active products, or archived ones with the filter, searchable by name or barcode.
+     * Users allowed to see costs also get each product's average cost (null before its first purchase).
      */
     public function index(Request $request): Response
     {
         $search = $request->string('search')->trim()->value();
         $archived = $request->boolean('archived');
+        $withCosts = $request->user()->can(StorePermission::CostsView->value);
 
         $products = Product::query()
             ->when($archived, fn ($query) => $query->archived(), fn ($query) => $query->active())
@@ -25,15 +29,20 @@ class ProductController extends Controller
             ->orderBy('name')
             ->orderBy('id')
             ->paginate(50)
-            ->withQueryString()
-            ->through(fn (Product $product) => [
-                'id' => $product->id,
-                'name' => $product->name,
-                'barcode' => $product->barcode,
-                'pieces_per_block' => $product->pieces_per_block,
-                'sale_price' => $product->sale_price,
-                'archived' => $product->isArchived(),
-            ]);
+            ->withQueryString();
+        $averageCosts = $withCosts
+            ? ProductCost::query()->whereIn('product_id', $products->pluck('id'))->pluck('average_cost', 'product_id')
+            : collect();
+
+        $products->through(fn (Product $product) => [
+            'id' => $product->id,
+            'name' => $product->name,
+            'barcode' => $product->barcode,
+            'pieces_per_block' => $product->pieces_per_block,
+            'sale_price' => $product->sale_price,
+            ...($withCosts ? ['average_cost' => $averageCosts->has($product->id) ? bcadd((string) $averageCosts[$product->id], '0.005', 2) : null] : []),
+            'archived' => $product->isArchived(),
+        ]);
 
         return Inertia::render('products/index', [
             'products' => $products,

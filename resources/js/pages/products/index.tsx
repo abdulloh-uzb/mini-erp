@@ -28,6 +28,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { usePermissions } from '@/hooks/use-permissions';
 import { formatMoney } from '@/lib/format';
+import { cn } from '@/lib/utils';
 import { index } from '@/routes/products';
 import type { Paginated } from '@/types';
 
@@ -38,6 +39,8 @@ type Product = {
     pieces_per_block: number;
     /** Per piece; pre-fills new sale lines. */
     sale_price: string | null;
+    /** Average cost per piece; present only for users allowed to see costs, null before the first purchase. */
+    average_cost?: string | null;
     archived: boolean;
 };
 
@@ -53,6 +56,9 @@ export default function ProductsIndex({ products, filters }: Props) {
     const { can } = usePermissions();
     const canManage = can('products.manage');
     const isFiltered = filters.search !== '' || filters.archived;
+    const showCosts = products.data.some(
+        (product) => product.average_cost !== undefined,
+    );
 
     return (
         <>
@@ -111,6 +117,9 @@ export default function ProductsIndex({ products, filters }: Props) {
                                 'Nomi',
                                 'Shtrix-kod',
                                 'Blokdagi dona',
+                                showCosts ? (
+                                    <div className="text-right">Tannarx</div>
+                                ) : null,
                                 <div className="text-right">Sotuv narxi</div>,
                                 canManage ? '' : null,
                             ].filter((column) => column !== null)}
@@ -120,6 +129,7 @@ export default function ProductsIndex({ products, filters }: Props) {
                                     key={product.id}
                                     product={product}
                                     canManage={canManage}
+                                    showCost={showCosts}
                                 />
                             ))}
                         </ListTable>
@@ -134,10 +144,17 @@ export default function ProductsIndex({ products, filters }: Props) {
 function ProductRow({
     product,
     canManage,
+    showCost,
 }: {
     product: Product;
     canManage: boolean;
+    showCost: boolean;
 }) {
+    const isBelowCost =
+        product.sale_price !== null &&
+        product.average_cost != null &&
+        Number(product.sale_price) < Number(product.average_cost);
+
     return (
         <tr className="border-t">
             <td className="px-4 py-3 font-medium">
@@ -156,15 +173,19 @@ function ProductRow({
             <td className="px-4 py-3 tabular-nums">
                 {product.pieces_per_block}
             </td>
-            <td className="px-4 py-3 text-right tabular-nums">
-                {product.sale_price !== null ? (
-                    <>
-                        {formatMoney(product.sale_price)}
-                        <span className="text-muted-foreground"> / dona</span>
-                    </>
-                ) : (
-                    <span className="text-muted-foreground">—</span>
+            {showCost && (
+                <td className="px-4 py-3 text-right tabular-nums">
+                    <PerPiece amount={product.average_cost ?? null} />
+                </td>
+            )}
+            <td
+                className={cn(
+                    'px-4 py-3 text-right tabular-nums',
+                    isBelowCost && 'text-destructive',
                 )}
+                title={isBelowCost ? 'Sotuv narxi tannarxdan past' : undefined}
+            >
+                <PerPiece amount={product.sale_price} />
             </td>
             {canManage && (
                 <td className="px-4 py-3">
@@ -191,6 +212,20 @@ function ProductRow({
                 </td>
             )}
         </tr>
+    );
+}
+
+/** "13 000 so'm / dona", or a dash when there is no amount. */
+function PerPiece({ amount }: { amount: string | null }) {
+    if (amount === null) {
+        return <span className="text-muted-foreground">—</span>;
+    }
+
+    return (
+        <>
+            {formatMoney(amount)}
+            <span className="text-muted-foreground"> / dona</span>
+        </>
     );
 }
 
