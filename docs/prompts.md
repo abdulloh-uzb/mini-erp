@@ -1539,3 +1539,155 @@ did you set docker and docker compose files?
 ```text
 yes, we need docker in order other people use this in github and run easily
 ```
+
+### 106. 2026-10-24 04:18
+
+```text
+Act as a PRODUCT MANAGER.
+
+give me list of AC s for @.scratch/mini-erp/issues/ so i can manually do QA. 
+AC should be in uzbek.
+```
+
+### 107. 2026-10-24 04:23
+
+```text
+pls make accordion for links inside sidebar. 
+
+sidebardagi menu nomlari har doim ham o'zbek tilida bo'lishi shart emas. bazi so'zlarni o'zbek tiliga tarjima qilinishi tushunarsiz bo'lib qolgan, misol uchun: Yetkazib beruvchiga qaytarishlar, Ko'chirishlar, Qaytarishlar.
+
+boshqa platformlar menuni qanday joylashtirishiga qarab va eng ko'p ishlatilishiga qarab menu joylashuvini o'zgartirishingni xoxlayman.
+```
+
+### 108. 2026-10-24 04:30
+
+```text
+biri ochilganda, ikkinchisi yopilib qolmasin. sidebardagi menu nomlarini yozuvlarini yanada kattaroq qil (27px for example).
+```
+
+### 109. 2026-10-24 (ChatGPT, sent with a screenshot of the stock page)
+
+```text
+act as a product designer
+
+ushbu stock sahifasini 10 ballik sistemada bahola. dont bias, only honest opinion as we are developing ERP system so we need to find mistakes.
+```
+
+### 110. 2026-10-24 (ChatGPT)
+
+```text
+menga check list tuzib ber. nimalar bo'lsa, nimalarni o'zgartirsam, 10/10 bo'ladi.
+```
+
+### 111. 2026-10-24 (ChatGPT)
+
+```text
+your checklist is shit. i want some changes but you give me just BS. i want straight answer
+```
+
+### 112. 2026-10-24 04:43
+
+```text
+http://127.0.0.1:8000/stock
+i want to change UX of this page.
+
+
+
+<pasted_content id="f7b5">
+- 1. Headerda 2ta takroriy "QOLDIQLAR" yozuvi bor. bittasini qoldirish kerak. eng tepadagisini o'chirib tashlasang bo'ladi. 
+- 2. Search va ombor filterini yonma-yon joylashtir. 
+- 3. Jadval ustunlarini qayta tartibla. Mahsulot → Ombor → Qoldiq → O‘rtacha tannarx → Qoldiq qiymati. Mahsulot birinchi bo‘lishi kerak.
+- 4. Qoldiqni ikki qatorda ko‘rsat. Asosiy: 10 blok. Pastida kichik kulrang matnda: 60 dona. Hozirgi 10 blok + 0 dona ko‘rinishi ortiqcha.
+- 5. Tannarx birligini ko‘rsat. 13 000 so‘m / dona. Hozir 13 000 so‘m nimaning tannarxi ekanligi aniq emas.
+- 6. Sonlarni o‘ngga tekisla. Qoldiq, tannarx va qiymat ustunlari right-aligned bo‘lsin. Moliyaviy raqamlarni solishtirish osonlashadi.
+- 7. Jami qiymatni jadvalning footer qismiga joylashtir. Hozir jadvaldan tashqarida, o‘ng tomonda osilib turibdi. Footer'da Jami qoldiq qiymati: 1 260 000 so‘m bo‘lsin. va yozuv ham judaham ko'rinarli bo'lsin, h1 yoki h2 kabi yirik bo'lsin
+- 
+</pasted_content id="f7b5">
+```
+
+### 113. 2026-10-24 04:48
+
+```text
+"qoldiq" qatorida asosiy fokus necha dona ekanligiga qaratilishi kerak. hozir esa necha blok ekanligiga fokus qaratilgan. 
+
+kam qolgan tovarlar, umuman qolmagan tovarlar, o'rtacha qolgan tovarlar, va barchasi. shunaqa tablarga ajratishimiz kerak. nechtada qaysi ro'yxatda bo'lishi kerakligini o'zing hal qil, standard sonlarni tanla. o'rtacha uchun sariq, qolmagan bo'lsa, qizil va hokozo.
+```
+
+### 114. 2026-10-24 04:51
+
+```text
+productni sotiladigan narxini kiritish mavjudmi bizda?
+```
+
+### 115. 2026-10-24 04:52
+
+```text
+sotiladigan narxni qo'shadigan qilishimiz kerak.
+```
+
+### 116. 2026-10-24 04:55
+
+```text
+placeholder="Mahsulot nomi yoki shtrix-kod" shunaqa inputlarning barchasida faqat nomini yozib boshlasangizgina productlar ro'yxatini chiqaradi. shuni fix qilishimiz kerak. hech narsa kiritilmaganda barcha mavjud productlarni ro'yxatini ko'rsatib tursin.
+```
+
+### 117. 2026-10-24 05:00
+
+```text
+http://127.0.0.1:8000/purchases/create sahifasida "Jami" blokida "Naqd" inputida sonlarni yozishda xatolik bo'lib ketishi mumkin.
+```
+
+### 118. 2026-10-24 05:03
+
+```text
+http://127.0.0.1:8000/products
+
+jadvalga sotuv narxi bilan birgalikda tan narx qatorini qo'shib ber
+```
+
+### 119. 2026-10-24 05:08
+
+```text
+continue
+```
+
+### 120. 2026-10-24 05:10
+
+```text
+biz shu vaqtgacha qo'ygan narxlarimiz blok uchunmidi? iltimos, bu niham tez da fix qil.
+```
+
+### 121. 2026-10-24 05:10
+
+```text
+Answer to "Narxlar har doim 1 dona uchun bo'lgan ... Nimani o'zgartiray?": Blok narxini ham ko'rsat (Recommended)
+```
+
+### 122. 2026-10-24 05:14
+
+```text
+thats great. rewrite @docs/prompts.md cuz we have some new prompts
+
+i wrote some new prompts in here claude.
+
+1.[image of stock page]
+and in chatgpt, these are my prompts:
+act as a product designer
+
+ushbu stock sahifasini 10 ballik sistemada bahola. dont bias, only honest opinion as we are developing ERP system so we need to find mistakes.
+2. menga check list tuzib ber. nimalar bo'lsa, nimalarni o'zgartirsam, 10/10 bo'ladi. 
+
+3. your checklist is shit. i want some changes but you give me just BS. i want straight answer
+```
+
+### 123. 2026-10-24 05:14
+
+```text
+prompts should be merged.
+```
+
+### 124. 2026-10-24 05:16
+
+```text
+push changes we did together in this conversation. split into different tasks because most of them are different
+```

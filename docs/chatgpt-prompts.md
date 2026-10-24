@@ -257,3 +257,15 @@ which one is better and why? short answer
 16\. mxik hamma tovarlar uchun mavjudmi?
 
 17\. faqat men senga yuborgan textlarni menga ro'yxat qilib berolasanmi?
+
+# another conversation
+
+_(sent with a screenshot of the stock page)_
+
+1\. act as a product designer
+
+ushbu stock sahifasini 10 ballik sistemada bahola. dont bias, only honest opinion as we are developing ERP system so we need to find mistakes.
+
+2\. menga check list tuzib ber. nimalar bo'lsa, nimalarni o'zgartirsam, 10/10 bo'ladi.
+
+3\. your checklist is shit. i want some changes but you give me just BS. i want straight answer
