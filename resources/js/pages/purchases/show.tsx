@@ -20,6 +20,7 @@ import {
 import type { DraftLine, LineErrors } from '@/components/document-form';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
+import { MoneyInput } from '@/components/money-input';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -241,8 +242,7 @@ function PurchaseForm({
     const form = useForm({
         counterparty_id: document?.counterparty_id ?? ('' as number | ''),
         location_id: (document?.location_id ?? locations.at(0)?.id ?? '') as
-            | number
-            | '',
+            number | '',
         note: document?.note ?? '',
         lines: (document?.lines ?? []).map((line): DraftLine => {
             const split = splitQuantity(line.quantity, line.pieces_per_block);
@@ -516,7 +516,10 @@ function PurchaseForm({
     );
 }
 
-/** Payment per method, with Jami, To'langan and the live Qarzga qoladi. */
+/**
+ * Payment per method, with Jami, To'langan and the live Qarzga qoladi. Qolganini fills a
+ * method with what is still unpaid; paying more than Jami warns, since execution refuses it.
+ */
 function PaymentPanel({
     methods,
     payments,
@@ -534,6 +537,19 @@ function PaymentPanel({
         (sum, amount) => sum + (Number(amount) || 0),
         0,
     );
+    const overpaid = paid - total;
+    const payRest = (method: string) =>
+        onChange(
+            method,
+            String(
+                Math.round(
+                    Math.max(
+                        total - paid + (Number(payments[method]) || 0),
+                        0,
+                    ) * 100,
+                ) / 100,
+            ),
+        );
 
     return (
         <div className="grid w-full max-w-xs gap-3 rounded-xl border p-4 text-sm">
@@ -543,20 +559,33 @@ function PaymentPanel({
                     <Label htmlFor={`purchase-payment-${method.id}`}>
                         {method.name}
                     </Label>
-                    <Input
-                        id={`purchase-payment-${method.id}`}
-                        inputMode="decimal"
-                        placeholder="0"
-                        value={payments[method.id] ?? ''}
-                        onChange={(event) =>
-                            onChange(method.id, event.target.value)
-                        }
-                    />
+                    <div className="flex gap-2">
+                        <MoneyInput
+                            id={`purchase-payment-${method.id}`}
+                            placeholder="0"
+                            value={payments[method.id] ?? ''}
+                            onValueChange={(amount) =>
+                                onChange(method.id, amount)
+                            }
+                        />
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => payRest(method.id)}
+                        >
+                            Qolganini
+                        </Button>
+                    </div>
                     <InputError message={errors[`payments.${method.id}`]} />
                 </div>
             ))}
             <InputError message={errors.payments} />
             <SummaryRow label="To'langan" value={formatMoney(paid)} />
+            {overpaid > 0.004 && (
+                <p className="text-destructive">
+                    To'lov jamidan {formatMoney(overpaid)} ko'p
+                </p>
+            )}
             <SummaryRow
                 label="Qarzga qoladi"
                 value={formatMoney(Math.max(total - paid, 0))}
