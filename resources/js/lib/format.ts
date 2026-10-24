@@ -56,6 +56,14 @@ export function formatQuantity(pieces: number, piecesPerBlock: number): string {
 
     const split = splitQuantity(pieces, piecesPerBlock);
 
+    if (split.blocks === 0) {
+        return `${split.pieces} dona`;
+    }
+
+    if (split.pieces === 0) {
+        return `${split.blocks} blok`;
+    }
+
     return `${split.blocks} blok + ${split.pieces} dona`;
 }
 
